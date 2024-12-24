@@ -51,7 +51,8 @@ func (ls *LifeSim) Draw() {
     
     windowCenter := fyne.NewPos(windowSize.Width/2.0, windowSize.Height/2.0)
 
-    // cells := make([]fyne.CanvasObject, 0, len(ls.Game.Population))
+    pixels := make(map[golife.Cell]int32)
+    maxDens := 1
 
     ls.Surface.RemoveAll()
     for cell, _ := range ls.Game.Population {
@@ -60,7 +61,13 @@ func (ls *LifeSim) Draw() {
         cellPos := fyne.NewPos(window_x, window_y)
 
         if ls.Scale < 2.0 {
-            fmt.Println("Can't display that far zoomed in yet")
+            if window_x >= 0 && window_y >= 0 && window_x < displayWidth && window_y < displayHeight {
+                pixelPos := golife.Cell{golife.Coord(window_x), golife.Coord(window_y)}
+                pixels[pixelPos] += 1
+                if int(pixels[pixelPos]) > maxDens {
+                    maxDens = int(pixels[pixelPos])
+                }
+            }
         } else {
             cellCircle := canvas.NewCircle(ls.CellColor)
             cellCircle.Resize(cellSize)
@@ -71,7 +78,23 @@ func (ls *LifeSim) Draw() {
 
             fmt.Printf("Cell at %v\n", cellPos)
         }
+    }
 
+    if ls.Scale < 2.0 && len(pixels) > 0 {
+        for pixelPos, count := range pixels {
+            density := float32(count)/float32(maxDens)
+            r, g, b, a := ls.CellColor.RGBA()
+            pixelColor := color.NRGBA{R: uint8(float32(r)*density),
+                                      G: uint8(float32(g)*density),
+                                      B: uint8(float32(b)*density),
+                                      A: uint8(a)}
+            pixel := canvas.NewRectangle(pixelColor)
+            pixel.Resize(fyne.NewSize(2, 2))
+            pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
+            ls.Surface.Add(pixel)
+
+            fmt.Println("Pixel at", pixelPos, "with density", density, "and color:", pixelColor)
+        }
     }
 
     ls.Surface.Refresh()
@@ -89,25 +112,20 @@ func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
 
 func (ls *LifeSim) ResizeToFit() {
     boxDisplayMin, boxDisplayMax := ls.Game.Population.BoundingBox()
-    if boxDisplayMin.X > boxDisplayMax.X {  // null field condition
-        ls.BoxDisplayMin = golife.Cell{0, 0}
-        ls.BoxDisplayMax = golife.Cell{10, 10}
-    } else {
-        ls.BoxDisplayMin = boxDisplayMin
-        ls.BoxDisplayMax = boxDisplayMax
-    }
+    ls.SetDisplayBox(boxDisplayMin, boxDisplayMax)
 }
 
 func main() {
     myApp := app.New()
     myWindow := myApp.NewWindow("Conway's Game of Life")
 
-    red := color.NRGBA{R: 180, G: 0, B: 0, A: 255}
+    // red := color.NRGBA{R: 180, G: 0, B: 0, A: 255}
     blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+    green := color.NRGBA{R: 0, G: 180, B: 0, A: 255}
     // colors := []color.Color{color.Black, red, blue, color.White}
     // colorIndex := 0
 
-    speedSlider := widget.NewSlider(100.0, 1000.0)
+    speedSlider := widget.NewSlider(1.0, 1000.0)
     speedSlider.SetValue(300.0)
 
     // rectangle := canvas.NewRectangle(colors[colorIndex])
@@ -148,7 +166,7 @@ func main() {
         running = ! running
         if running {
             setRunStopText("Pause", theme.MediaPauseIcon())
-            lifeSim.CellColor = red
+            lifeSim.CellColor = green
             go runGame()
         } else {
             setRunStopText("Run", theme.MediaPlayIcon())
