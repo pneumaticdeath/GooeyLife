@@ -1,7 +1,7 @@
 package main
 
 import (
-    "fmt"
+    // "fmt"
     "image/color"
     "os"
     "time"
@@ -73,16 +73,13 @@ func (ls *LifeSim) Draw() {
             cellCircle.Resize(cellSize)
             cellCircle.Move(cellPos)
 
-            // cells = append(cells, cellCircle)
             ls.Surface.Add(cellCircle)
-
-            fmt.Printf("Cell at %v\n", cellPos)
         }
     }
 
     if ls.Scale < 2.0 && len(pixels) > 0 {
         for pixelPos, count := range pixels {
-            density := float32(count)/float32(maxDens)
+            density := max(float32(count)/float32(maxDens), float32(0.5))
             r, g, b, a := ls.CellColor.RGBA()
             pixelColor := color.NRGBA{R: uint8(float32(r)*density),
                                       G: uint8(float32(g)*density),
@@ -92,8 +89,6 @@ func (ls *LifeSim) Draw() {
             pixel.Resize(fyne.NewSize(2, 2))
             pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
             ls.Surface.Add(pixel)
-
-            fmt.Println("Pixel at", pixelPos, "with density", density, "and color:", pixelColor)
         }
     }
 
@@ -107,6 +102,26 @@ func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
         ls.BoxDisplayMax = golife.Cell{10, 10}
     } else {
         ls.BoxDisplayMin, ls.BoxDisplayMax = minCorner, maxCorner
+    }
+}
+
+func (ls *LifeSim) AutoZoom() {
+    gameBoxMin, gameBoxMax := ls.Game.Population.BoundingBox()
+
+    if gameBoxMin.X < ls.BoxDisplayMin.X {
+        ls.BoxDisplayMin.X = gameBoxMin.X
+    }
+
+    if gameBoxMin.Y < ls.BoxDisplayMin.Y {
+        ls.BoxDisplayMin.Y = gameBoxMin.Y
+    }
+
+    if gameBoxMax.X > ls.BoxDisplayMax.X {
+        ls.BoxDisplayMax.X = gameBoxMax.X
+    }
+
+    if gameBoxMax.Y > ls.BoxDisplayMax.Y {
+        ls.BoxDisplayMax.Y = gameBoxMax.Y
     }
 }
 
@@ -125,7 +140,7 @@ func main() {
     // colors := []color.Color{color.Black, red, blue, color.White}
     // colorIndex := 0
 
-    speedSlider := widget.NewSlider(1.0, 1000.0)
+    speedSlider := widget.NewSlider(1.5, 1000.0)
     speedSlider.SetValue(300.0)
 
     // rectangle := canvas.NewRectangle(colors[colorIndex])
@@ -141,8 +156,6 @@ func main() {
         lifeSim.Game = golife.Load("glider.rle")
     }
     // lifeSim.Surface = mainContent
-    fmt.Printf("Game type: %T\n", lifeSim.Game)
-    fmt.Println("Cells:", lifeSim.Game.Population)
     lifeSim.ResizeToFit()
     // lifeSim.CellColor = blue
     lifeSim.Draw()
@@ -153,7 +166,8 @@ func main() {
         for running {
             lifeSim.Draw()
             lifeSim.Game.Next()
-            lifeSim.ResizeToFit()
+            // lifeSim.ResizeToFit()
+            lifeSim.AutoZoom()
             time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
         }
     }
@@ -182,9 +196,11 @@ func main() {
     topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(),
                             canvas.NewText("faster", color.Black), speedSlider, canvas.NewText("slower", color.Black))
     content := container.NewBorder(topBar, nil, nil, nil, lifeSim.Surface)
-    myWindow.Resize(fyne.NewSize(250, 250))
+    myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
+    lifeSim.Draw()
     // speedSlider.Resize(fyne.NewSize(30, 200)) // doesn't seem to have much effect
+
     myWindow.ShowAndRun()
 }
 
