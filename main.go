@@ -43,6 +43,10 @@ func NewLifeSim() *LifeSim {
     return sim
 }
 
+func (ls *LifeSim) MinSize() fyne.Size {
+    return fyne.NewSize(150, 150)
+}
+
 func (ls *LifeSim) Draw() {
 
     windowSize := ls.surface.Size()
@@ -169,8 +173,8 @@ func main() {
 
     runGame := func() {
         for running {
-            lifeSim.Draw()
             lifeSim.Game.Next()
+            lifeSim.Draw()
             // lifeSim.ResizeToFit()
             lifeSim.AutoZoom()
             time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
@@ -203,6 +207,12 @@ func main() {
     content := container.NewBorder(topBar, nil, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
+
+    // This is a complete hack to get the game to display initially
+    go func() {
+        time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
+        lifeSim.Draw()
+    }()
 
     myWindow.ShowAndRun()
 }
