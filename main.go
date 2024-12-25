@@ -1,7 +1,6 @@
 package main
 
 import (
-    // "fmt"
     "image/color"
     "os"
     "time"
@@ -18,25 +17,34 @@ import (
 )
 
 type LifeSim struct {
+    widget.BaseWidget
     Game                                *golife.Game
     BoxDisplayMin, BoxDisplayMax        golife.Cell
     Scale                               float32 // pixel per cell
     Surface                             *fyne.Container
     CellColor                           color.Color
-    Running                             bool
+    running                             bool
     StepTime                            float64
 }
 
-func (ls *LifeSim) Init() {
-    ls.Game = golife.NewGame()
-    ls.BoxDisplayMin = golife.Cell{0, 0}
-    ls.BoxDisplayMax = golife.Cell{10, 10}
-    ls.Surface = container.NewWithoutLayout()
-    ls.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
+    ls.Draw()
+    return widget.NewSimpleRenderer(ls.Surface)
+}
+
+func NewLifeSim() *LifeSim {
+    sim := &LifeSim{}
+    sim.Game = golife.NewGame()
+    sim.BoxDisplayMin = golife.Cell{0, 0}
+    sim.BoxDisplayMax = golife.Cell{10, 10}
+    sim.Surface = container.NewWithoutLayout()
+    sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+    sim.ExtendBaseWidget(sim)
+    return sim
 }
 
 func (ls *LifeSim) Draw() {
-    // Need to implement
+
     windowSize := ls.Surface.Size()
 
     displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
@@ -147,18 +155,15 @@ func main() {
     // mainContent := container.New(layout.NewGridLayout(1), rectangle)
     // mainContent := container.NewWithoutLayout()
 
-    var lifeSim LifeSim
+    lifeSim := NewLifeSim()
 
-    lifeSim.Init()
     if len(os.Args) > 1 {
         lifeSim.Game = golife.Load(os.Args[1])
     } else {
         lifeSim.Game = golife.Load("glider.rle")
     }
-    // lifeSim.Surface = mainContent
     lifeSim.ResizeToFit()
-    // lifeSim.CellColor = blue
-    lifeSim.Draw()
+    lifeSim.Refresh()
 
     running := false
 
@@ -195,11 +200,9 @@ func main() {
 
     topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(),
                             canvas.NewText("faster", color.Black), speedSlider, canvas.NewText("slower", color.Black))
-    content := container.NewBorder(topBar, nil, nil, nil, lifeSim.Surface)
+    content := container.NewBorder(topBar, nil, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
-    lifeSim.Draw()
-    // speedSlider.Resize(fyne.NewSize(30, 200)) // doesn't seem to have much effect
 
     myWindow.ShowAndRun()
 }
