@@ -1,6 +1,7 @@
 package main
 
 import (
+    // "fmt"
     "image/color"
     "os"
     "time"
@@ -24,6 +25,7 @@ type LifeSim struct {
     drawingSurface                      *fyne.Container
     CellColor                           color.Color
     running                             bool
+    autoZoom                            bool
     StepTime                            float64
 }
 
@@ -39,6 +41,8 @@ func NewLifeSim() *LifeSim {
     sim.BoxDisplayMax = golife.Cell{10, 10}
     sim.drawingSurface = container.NewWithoutLayout()
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+    sim.autoZoom = true
+    // sim.autoZoom = false
     sim.ExtendBaseWidget(sim)
     return sim
 }
@@ -59,9 +63,22 @@ func (ls *LifeSim) Stop() {
     ls.running = false
 }
 
+func (ls *LifeSim) SetAutoZoom(az bool) {
+    ls.autoZoom = az
+}
+
+func (ls *LifeSim) IsAutoZoom() bool {
+    return ls.autoZoom
+}
+
 func (ls *LifeSim) Draw() {
+    ls.AutoZoom()
 
     windowSize := ls.drawingSurface.Size()
+    if windowSize.Width == 0 || windowSize.Height == 0 {
+        // fmt.Println("Can't draw on a zero_sized window")
+        return
+    }
 
     displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
     displayHeight := float32(ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + 1)
@@ -84,20 +101,20 @@ func (ls *LifeSim) Draw() {
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
         cellPos := fyne.NewPos(window_x, window_y)
 
-        if ls.Scale < 2.0 {
-            if window_x >= 0 && window_y >= 0 && window_x < displayWidth && window_y < displayHeight {
+        if window_x >= -0.5 && window_y >= -0.5 && window_x < windowSize.Width && window_y < windowSize.Height {
+            if ls.Scale < 2.0 {
                 pixelPos := golife.Cell{golife.Coord(window_x), golife.Coord(window_y)}
                 pixels[pixelPos] += 1
                 if int(pixels[pixelPos]) > maxDens {
                     maxDens = int(pixels[pixelPos])
                 }
-            }
-        } else {
-            cellCircle := canvas.NewCircle(ls.CellColor)
-            cellCircle.Resize(cellSize)
-            cellCircle.Move(cellPos)
+            } else {
+                cellCircle := canvas.NewCircle(ls.CellColor)
+                cellCircle.Resize(cellSize)
+                cellCircle.Move(cellPos)
 
-            ls.drawingSurface.Add(cellCircle)
+                ls.drawingSurface.Add(cellCircle)
+            }
         }
     }
 
@@ -130,6 +147,10 @@ func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
 }
 
 func (ls *LifeSim) AutoZoom() {
+    if ! ls.autoZoom {
+        return 
+    }
+
     gameBoxMin, gameBoxMax := ls.Game.Population.BoundingBox()
 
     if gameBoxMin.X < ls.BoxDisplayMin.X {
@@ -175,12 +196,15 @@ func main() {
     lifeSim.ResizeToFit()
     lifeSim.Refresh()
 
+    autoZoomCheckBox := widget.NewCheck("Auto Zoom", func(checked bool) { lifeSim.SetAutoZoom(checked) })
+    autoZoomCheckBox.SetChecked(lifeSim.IsAutoZoom())
+
     runGame := func() {
         for lifeSim.IsRunning() {
             lifeSim.Game.Next()
             lifeSim.Draw()
             // lifeSim.ResizeToFit()
-            lifeSim.AutoZoom()
+            // lifeSim.AutoZoom()
             time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
         }
     }
@@ -207,7 +231,7 @@ func main() {
         runStopButton.SetText(label)
     }
 
-    topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(),
+    topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(), autoZoomCheckBox,
                             canvas.NewText("faster", color.Black), speedSlider, canvas.NewText("slower", color.Black))
     content := container.NewBorder(topBar, nil, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
