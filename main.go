@@ -21,7 +21,7 @@ type LifeSim struct {
     Game                                *golife.Game
     BoxDisplayMin, BoxDisplayMax        golife.Cell
     Scale                               float32 // pixel per cell
-    Surface                             *fyne.Container
+    surface                             *fyne.Container
     CellColor                           color.Color
     running                             bool
     StepTime                            float64
@@ -29,7 +29,7 @@ type LifeSim struct {
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
     ls.Draw()
-    return widget.NewSimpleRenderer(ls.Surface)
+    return widget.NewSimpleRenderer(ls.surface)
 }
 
 func NewLifeSim() *LifeSim {
@@ -37,7 +37,7 @@ func NewLifeSim() *LifeSim {
     sim.Game = golife.NewGame()
     sim.BoxDisplayMin = golife.Cell{0, 0}
     sim.BoxDisplayMax = golife.Cell{10, 10}
-    sim.Surface = container.NewWithoutLayout()
+    sim.surface = container.NewWithoutLayout()
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
     sim.ExtendBaseWidget(sim)
     return sim
@@ -45,7 +45,7 @@ func NewLifeSim() *LifeSim {
 
 func (ls *LifeSim) Draw() {
 
-    windowSize := ls.Surface.Size()
+    windowSize := ls.surface.Size()
 
     displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
     displayHeight := float32(ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + 1)
@@ -62,7 +62,7 @@ func (ls *LifeSim) Draw() {
     pixels := make(map[golife.Cell]int32)
     maxDens := 1
 
-    ls.Surface.RemoveAll()
+    ls.surface.RemoveAll()
     for cell, _ := range ls.Game.Population {
         window_x := windowCenter.X + ls.Scale * (float32(cell.X) - displayCenter.X) - ls.Scale/2.0
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
@@ -81,7 +81,7 @@ func (ls *LifeSim) Draw() {
             cellCircle.Resize(cellSize)
             cellCircle.Move(cellPos)
 
-            ls.Surface.Add(cellCircle)
+            ls.surface.Add(cellCircle)
         }
     }
 
@@ -96,11 +96,11 @@ func (ls *LifeSim) Draw() {
             pixel := canvas.NewRectangle(pixelColor)
             pixel.Resize(fyne.NewSize(2, 2))
             pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
-            ls.Surface.Add(pixel)
+            ls.surface.Add(pixel)
         }
     }
 
-    ls.Surface.Refresh()
+    ls.surface.Refresh()
 
 }
 
