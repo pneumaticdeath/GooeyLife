@@ -1,7 +1,7 @@
 package main
 
 import (
-    // "fmt"
+    "fmt"
     "image/color"
     "os"
     "time"
@@ -188,6 +188,54 @@ func (ls *LifeSim) ResizeToFit() {
     ls.SetDisplayBox(boxDisplayMin, boxDisplayMax)
 }
 
+type StatusBar struct {
+    widget.BaseWidget
+    life                *LifeSim
+    GenerationDisplay   *widget.Label
+    CellCountDisplay    *widget.Label
+    ScaleDisplay        *widget.Label
+    UpdateCadence       time.Duration
+    bar                 *fyne.Container
+}
+
+func NewStatusBar(sim *LifeSim) (*StatusBar) {
+    genDisp := widget.NewLabel("")
+    cellCountDisp := widget.NewLabel("")
+    scaleDisp := widget.NewLabel("")
+    statBar := &StatusBar{life: sim, GenerationDisplay: genDisp, 
+                          CellCountDisplay: cellCountDisp, ScaleDisplay: scaleDisp,
+                          UpdateCadence: 20*time.Millisecond}
+    statBar.bar = container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
+                                layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
+                                layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay)
+
+    statBar.ExtendBaseWidget(statBar)
+
+    go func() {
+        for {
+            statBar.Refresh()
+            time.Sleep(statBar.UpdateCadence)
+        }
+    }()
+
+    return statBar
+}
+
+func (statBar *StatusBar) CreateRenderer() fyne.WidgetRenderer {
+    return widget.NewSimpleRenderer(statBar.bar)
+}
+
+func (statBar *StatusBar) Update() {
+    statBar.GenerationDisplay.SetText(fmt.Sprintf("%d", statBar.life.Game.Generation))
+    statBar.CellCountDisplay.SetText(fmt.Sprintf("%d", len(statBar.life.Game.Population)))
+    statBar.ScaleDisplay.SetText(fmt.Sprintf("%.3f", statBar.life.Scale))
+}
+
+func (statBar *StatusBar) Refresh() {
+    statBar.Update()
+    statBar.BaseWidget.Refresh()
+}
+
 func main() {
     myApp := app.New()
     myWindow := myApp.NewWindow("Conway's Game of Life")
@@ -246,7 +294,8 @@ func main() {
 
     topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(), autoZoomCheckBox,
                             canvas.NewText("faster", color.Black), speedSlider, canvas.NewText("slower", color.Black))
-    content := container.NewBorder(topBar, nil, nil, nil, lifeSim)
+    statusBar := NewStatusBar(lifeSim)
+    content := container.NewBorder(topBar, statusBar, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
 
