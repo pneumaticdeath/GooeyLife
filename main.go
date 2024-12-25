@@ -236,16 +236,96 @@ func (statBar *StatusBar) Refresh() {
     statBar.BaseWidget.Refresh()
 }
 
-func main() {
-    myApp := app.New()
-    myWindow := myApp.NewWindow("Conway's Game of Life")
+type ControlBar struct {
+    widget.BaseWidget
+    life                *LifeSim
+    backwardStepButton  *widget.Button
+    runStopButton       *widget.Button
+    forwardStepButton   *widget.Button
+    autoZoomCheckBox    *widget.Check
+    speedSlider         *widget.Slider
+    bar                 *fyne.Container
+}
+
+func NewControlBar(sim *LifeSim) *ControlBar {
+    controlBar := &ControlBar{}
+    controlBar.life = sim
 
     // red := color.NRGBA{R: 180, G: 0, B: 0, A: 255}
     blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
     green := color.NRGBA{R: 0, G: 180, B: 0, A: 255}
 
-    speedSlider := widget.NewSlider(1.5, 1000.0)
-    speedSlider.SetValue(300.0)
+    // Haven't implemented this functionality yet
+    controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {})
+    controlBar.backwardStepButton.Disable()
+
+    // Stub so we can pass it as part of the button
+    // action.  Will be replaced later.
+    setRunStopText := func(label string, icon fyne.Resource) {}
+
+    controlBar.runStopButton = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
+        if controlBar.life.IsRunning() {
+            controlBar.life.Stop()
+            setRunStopText("Run", theme.MediaPlayIcon())
+            controlBar.life.CellColor = blue
+            controlBar.life.Draw()
+        } else {
+            controlBar.life.Start()
+            setRunStopText("Pause", theme.MediaPauseIcon())
+            controlBar.life.CellColor = green
+            go controlBar.RunGame()
+        }})
+
+    setRunStopText = func(label string, icon fyne.Resource) {
+        controlBar.runStopButton.SetIcon(icon)
+        controlBar.runStopButton.SetText(label)
+    }
+
+    controlBar.forwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipNextIcon(), func() {
+        if controlBar.life.IsRunning() {
+            controlBar.life.Stop()
+            controlBar.life.CellColor = blue
+            controlBar.life.Refresh()
+        } else {
+            controlBar.StepForward()
+        }
+    })
+
+    controlBar.autoZoomCheckBox = widget.NewCheck("Auto Zoom", func(checked bool) { controlBar.life.SetAutoZoom(checked) })
+    controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
+
+    controlBar.speedSlider = widget.NewSlider(1.5, 500.0)
+    controlBar.speedSlider.SetValue(200.0)
+
+    controlBar.bar = container.New(layout.NewHBoxLayout(), 
+                                   controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
+                                   controlBar.autoZoomCheckBox, layout.NewSpacer(),
+                                   canvas.NewText("faster", color.Black), controlBar.speedSlider, canvas.NewText("slower", color.Black))
+
+    controlBar.ExtendBaseWidget(controlBar)
+    return controlBar
+}
+
+func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
+    return widget.NewSimpleRenderer(controlBar.bar)
+}
+
+func (controlBar *ControlBar) RunGame() {
+    for controlBar.life.IsRunning() {
+        controlBar.StepForward()
+        time.Sleep(time.Duration(controlBar.speedSlider.Value)*time.Millisecond)
+    }
+}
+
+func (controlBar *ControlBar) StepForward() {
+    controlBar.life.Game.Next()
+    controlBar.life.Draw()
+}
+
+
+func main() {
+    myApp := app.New()
+    myWindow := myApp.NewWindow("Conway's Game of Life")
 
     lifeSim := NewLifeSim()
 
@@ -257,45 +337,9 @@ func main() {
     lifeSim.ResizeToFit()
     lifeSim.Refresh()
 
-    autoZoomCheckBox := widget.NewCheck("Auto Zoom", func(checked bool) { lifeSim.SetAutoZoom(checked) })
-    autoZoomCheckBox.SetChecked(lifeSim.IsAutoZoom())
-
-    runGame := func() {
-        for lifeSim.IsRunning() {
-            lifeSim.Game.Next()
-            lifeSim.Draw()
-            // lifeSim.ResizeToFit()
-            // lifeSim.AutoZoom()
-            time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
-        }
-    }
-
-    // Stub so we can pass it as part of the button
-    // action.  Will be replaced later.
-    setRunStopText := func(label string, icon fyne.Resource) {}
-
-    runStopButton := widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
-        if lifeSim.IsRunning() {
-            lifeSim.Stop()
-            setRunStopText("Run", theme.MediaPlayIcon())
-            lifeSim.CellColor = blue
-            lifeSim.Draw()
-        } else {
-            lifeSim.Start()
-            setRunStopText("Pause", theme.MediaPauseIcon())
-            lifeSim.CellColor = green
-            go runGame()
-        }})
-
-    setRunStopText = func(label string, icon fyne.Resource) {
-        runStopButton.SetIcon(icon)
-        runStopButton.SetText(label)
-    }
-
-    topBar := container.New(layout.NewHBoxLayout(), runStopButton, layout.NewSpacer(), autoZoomCheckBox,
-                            canvas.NewText("faster", color.Black), speedSlider, canvas.NewText("slower", color.Black))
+    controlBar := NewControlBar(lifeSim)
     statusBar := NewStatusBar(lifeSim)
-    content := container.NewBorder(topBar, statusBar, nil, nil, lifeSim)
+    content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
 
