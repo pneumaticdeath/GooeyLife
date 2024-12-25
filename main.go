@@ -21,7 +21,7 @@ type LifeSim struct {
     Game                                *golife.Game
     BoxDisplayMin, BoxDisplayMax        golife.Cell
     Scale                               float32 // pixel per cell
-    surface                             *fyne.Container
+    drawingSurface                      *fyne.Container
     CellColor                           color.Color
     running                             bool
     StepTime                            float64
@@ -29,7 +29,7 @@ type LifeSim struct {
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
     ls.Draw()
-    return widget.NewSimpleRenderer(ls.surface)
+    return widget.NewSimpleRenderer(ls.drawingSurface)
 }
 
 func NewLifeSim() *LifeSim {
@@ -37,7 +37,7 @@ func NewLifeSim() *LifeSim {
     sim.Game = golife.NewGame()
     sim.BoxDisplayMin = golife.Cell{0, 0}
     sim.BoxDisplayMax = golife.Cell{10, 10}
-    sim.surface = container.NewWithoutLayout()
+    sim.drawingSurface = container.NewWithoutLayout()
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
     sim.ExtendBaseWidget(sim)
     return sim
@@ -47,9 +47,21 @@ func (ls *LifeSim) MinSize() fyne.Size {
     return fyne.NewSize(150, 150)
 }
 
+func (ls *LifeSim) IsRunning() bool {
+    return ls.running
+}
+
+func (ls *LifeSim) Start() {
+    ls.running = true
+}
+
+func (ls *LifeSim) Stop() {
+    ls.running = false
+}
+
 func (ls *LifeSim) Draw() {
 
-    windowSize := ls.surface.Size()
+    windowSize := ls.drawingSurface.Size()
 
     displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
     displayHeight := float32(ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + 1)
@@ -66,7 +78,7 @@ func (ls *LifeSim) Draw() {
     pixels := make(map[golife.Cell]int32)
     maxDens := 1
 
-    ls.surface.RemoveAll()
+    ls.drawingSurface.RemoveAll()
     for cell, _ := range ls.Game.Population {
         window_x := windowCenter.X + ls.Scale * (float32(cell.X) - displayCenter.X) - ls.Scale/2.0
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
@@ -85,7 +97,7 @@ func (ls *LifeSim) Draw() {
             cellCircle.Resize(cellSize)
             cellCircle.Move(cellPos)
 
-            ls.surface.Add(cellCircle)
+            ls.drawingSurface.Add(cellCircle)
         }
     }
 
@@ -100,11 +112,11 @@ func (ls *LifeSim) Draw() {
             pixel := canvas.NewRectangle(pixelColor)
             pixel.Resize(fyne.NewSize(2, 2))
             pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
-            ls.surface.Add(pixel)
+            ls.drawingSurface.Add(pixel)
         }
     }
 
-    ls.surface.Refresh()
+    ls.drawingSurface.Refresh()
 
 }
 
@@ -149,15 +161,9 @@ func main() {
     // red := color.NRGBA{R: 180, G: 0, B: 0, A: 255}
     blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
     green := color.NRGBA{R: 0, G: 180, B: 0, A: 255}
-    // colors := []color.Color{color.Black, red, blue, color.White}
-    // colorIndex := 0
 
     speedSlider := widget.NewSlider(1.5, 1000.0)
     speedSlider.SetValue(300.0)
-
-    // rectangle := canvas.NewRectangle(colors[colorIndex])
-    // mainContent := container.New(layout.NewGridLayout(1), rectangle)
-    // mainContent := container.NewWithoutLayout()
 
     lifeSim := NewLifeSim()
 
@@ -169,10 +175,8 @@ func main() {
     lifeSim.ResizeToFit()
     lifeSim.Refresh()
 
-    running := false
-
     runGame := func() {
-        for running {
+        for lifeSim.IsRunning() {
             lifeSim.Game.Next()
             lifeSim.Draw()
             // lifeSim.ResizeToFit()
@@ -186,15 +190,16 @@ func main() {
     setRunStopText := func(label string, icon fyne.Resource) {}
 
     runStopButton := widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
-        running = ! running
-        if running {
-            setRunStopText("Pause", theme.MediaPauseIcon())
-            lifeSim.CellColor = green
-            go runGame()
-        } else {
+        if lifeSim.IsRunning() {
+            lifeSim.Stop()
             setRunStopText("Run", theme.MediaPlayIcon())
             lifeSim.CellColor = blue
             lifeSim.Draw()
+        } else {
+            lifeSim.Start()
+            setRunStopText("Pause", theme.MediaPauseIcon())
+            lifeSim.CellColor = green
+            go runGame()
         }})
 
     setRunStopText = func(label string, icon fyne.Resource) {
