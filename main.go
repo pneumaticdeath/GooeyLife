@@ -24,6 +24,7 @@ type LifeSim struct {
     Scale                               float32 // pixel per cell
     drawingSurface                      *fyne.Container
     CellColor                           color.Color
+    BackgroundColor                     color.Color
     running                             bool
     autoZoom                            bool
     StepTime                            float64
@@ -41,8 +42,9 @@ func NewLifeSim() *LifeSim {
     sim.BoxDisplayMax = golife.Cell{10, 10}
     sim.drawingSurface = container.NewWithoutLayout()
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+    sim.BackgroundColor = color.Black
+    // sim.BackgroundColor = color.White
     sim.autoZoom = true
-    // sim.autoZoom = false
     sim.ExtendBaseWidget(sim)
     return sim
 }
@@ -101,7 +103,7 @@ func (ls *LifeSim) Draw() {
     maxDens := 1
 
     ls.drawingSurface.RemoveAll()
-    background := canvas.NewRectangle(color.Black)
+    background := canvas.NewRectangle(ls.BackgroundColor)
     background.Resize(windowSize)
     background.Move(fyne.NewPos(0,0))
 
@@ -131,12 +133,12 @@ func (ls *LifeSim) Draw() {
 
     if ls.Scale < 2.0 && len(pixels) > 0 {
         for pixelPos, count := range pixels {
-            density := max(float32(count)/float32(maxDens), float32(0.5))
+            density := max(float32(count)/float32(maxDens), float32(0.25))
             r, g, b, a := ls.CellColor.RGBA()
-            pixelColor := color.NRGBA{R: uint8(float32(r)*density),
-                                      G: uint8(float32(g)*density),
-                                      B: uint8(float32(b)*density),
-                                      A: uint8(a)}
+            pixelColor := color.NRGBA{R: uint8(r),
+                                      G: uint8(g),
+                                      B: uint8(b),
+                                      A: uint8(float32(a)*density)}
             pixel := canvas.NewRectangle(pixelColor)
             pixel.Resize(fyne.NewSize(2, 2))
             pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
