@@ -71,6 +71,11 @@ func (ls *LifeSim) IsAutoZoom() bool {
     return ls.autoZoom
 }
 
+func (ls *LifeSim) Resize(size fyne.Size) {
+    ls.Draw()
+    ls.BaseWidget.Resize(size)
+}
+
 func (ls *LifeSim) Draw() {
     ls.AutoZoom()
 
@@ -96,6 +101,12 @@ func (ls *LifeSim) Draw() {
     maxDens := 1
 
     ls.drawingSurface.RemoveAll()
+    background := canvas.NewRectangle(color.Black)
+    background.Resize(windowSize)
+    background.Move(fyne.NewPos(0,0))
+
+    ls.drawingSurface.Add(background)
+
     for cell, _ := range ls.Game.Population {
         window_x := windowCenter.X + ls.Scale * (float32(cell.X) - displayCenter.X) - ls.Scale/2.0
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
@@ -236,12 +247,6 @@ func main() {
     content := container.NewBorder(topBar, nil, nil, nil, lifeSim)
     myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
-
-    // This is a complete hack to get the game to display initially
-    go func() {
-        time.Sleep(time.Duration(speedSlider.Value)*time.Millisecond)
-        lifeSim.Draw()
-    }()
 
     myWindow.ShowAndRun()
 }
