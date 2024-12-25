@@ -191,7 +191,7 @@ func main() {
     if len(os.Args) > 1 {
         lifeSim.Game = golife.Load(os.Args[1])
     } else {
-        lifeSim.Game = golife.Load("glider.rle")
+        lifeSim.Game = golife.Load("default.rle")
     }
     lifeSim.ResizeToFit()
     lifeSim.Refresh()
