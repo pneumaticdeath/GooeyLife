@@ -4,6 +4,7 @@ import (
     "fmt"
     "image/color"
     "os"
+    "runtime"
     "time"
 
     "github.com/pneumaticdeath/golife"
@@ -295,6 +296,7 @@ type ControlBar struct {
     forwardStepButton   *widget.Button
     zoomOutButton       *widget.Button
     autoZoomCheckBox    *widget.Check
+    zoomFitButton       *widget.Button
     zoomInButton        *widget.Button
     speedSlider         *widget.Slider
     bar                 *fyne.Container
@@ -345,6 +347,8 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     })
     controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
+    controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {controlBar.life.ResizeToFit()})
+
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
     controlBar.speedSlider = widget.NewSlider(1.5, 500.0)
@@ -352,7 +356,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
                                    controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
-                                   controlBar.zoomOutButton, controlBar.autoZoomCheckBox, controlBar.zoomInButton, layout.NewSpacer(),
+                                   controlBar.zoomOutButton, controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton, layout.NewSpacer(),
                                    canvas.NewText("faster", color.Black), controlBar.speedSlider, canvas.NewText("slower", color.Black))
 
     controlBar.ExtendBaseWidget(controlBar)
@@ -487,15 +491,22 @@ func main() {
         }
     }
 
+    var modKey fyne.KeyModifier
+    if runtime.GOOS == "darwin" {
+        modKey = fyne.KeyModifierSuper
+    } else {
+        modKey = fyne.KeyModifierControl
+    }
+
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
         dialog.ShowFileOpen(fileOpenCallback, myWindow)
     })
-    fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: fyne.KeyModifierSuper}
+    fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
         dialog.ShowFileSave(fileSaveCallback, myWindow)
     })
-    fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierSuper}
+    fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
 
     fileMenu := fyne.NewMenu("File", fileOpenMenuItem, fileSaveMenuItem)
     mainMenu := fyne.NewMainMenu(fileMenu)
