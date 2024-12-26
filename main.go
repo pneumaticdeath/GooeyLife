@@ -518,7 +518,14 @@ func main() {
     content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
     myWindow.SetContent(content)
     myWindow.Resize(fyne.NewSize(500, 500))
-
+    toggleRun := func(shortcut fyne.Shortcut) {
+        if controlBar.IsRunning() {
+            controlBar.StopSim()
+        } else {
+            controlBar.StartSim()
+        }
+    }
+    myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
     myWindow.ShowAndRun()
 }
 
