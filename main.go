@@ -19,6 +19,8 @@ import (
     "fyne.io/fyne/v2/widget"
 )
 
+const ZoomFactor = 1.1
+
 type LifeSim struct {
     widget.BaseWidget
     Game                                *golife.Game
@@ -161,6 +163,39 @@ func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
     }
 }
 
+func (ls *LifeSim) Zoom(factor float32) {
+    ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = scale(ls.BoxDisplayMin.X, ls.BoxDisplayMax.X, factor)
+    ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = scale(ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y, factor)
+}
+
+func scale(min_v, max_v golife.Coord, factor float32) (golife.Coord, golife.Coord) {
+    mid_v := float32(max_v + min_v)/2.0
+    new_min := golife.Coord(mid_v - (mid_v - float32(min_v))*factor)
+    new_max := golife.Coord(mid_v + (float32(max_v) - mid_v)*factor)
+
+    if new_min == min_v {
+        if factor < 1.0 {
+            new_min += 1
+        } else if factor > 1.0 {
+            new_min -= 1
+        }
+    }
+
+    if new_max == max_v {
+        if factor < 1.0 {
+            new_max -= 1
+        } else if factor > 1.0 {
+            new_max += 1
+        }
+    }
+
+    if new_max > new_min {
+        return new_min, new_max
+    } else {
+        return min_v, max_v
+    }
+}
+
 func (ls *LifeSim) AutoZoom() {
     if ! ls.autoZoom {
         return 
@@ -244,7 +279,9 @@ type ControlBar struct {
     backwardStepButton  *widget.Button
     runStopButton       *widget.Button
     forwardStepButton   *widget.Button
+    zoomOutButton       *widget.Button
     autoZoomCheckBox    *widget.Check
+    zoomInButton        *widget.Button
     speedSlider         *widget.Slider
     bar                 *fyne.Container
 }
@@ -273,6 +310,8 @@ func NewControlBar(sim *LifeSim) *ControlBar {
         }
     })
 
+    controlBar.zoomOutButton = widget.NewButtonWithIcon("", theme.ZoomOutIcon(), func () {controlBar.ZoomOut()})
+
     controlBar.autoZoomCheckBox = widget.NewCheck("Auto Zoom", func(checked bool) { 
         controlBar.life.SetAutoZoom(checked) 
         if controlBar.life.IsAutoZoom() {
@@ -281,12 +320,14 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     })
     controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
+    controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
+
     controlBar.speedSlider = widget.NewSlider(1.5, 500.0)
     controlBar.speedSlider.SetValue(200.0)
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
                                    controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
-                                   controlBar.autoZoomCheckBox, layout.NewSpacer(),
+                                   controlBar.zoomOutButton, controlBar.autoZoomCheckBox, controlBar.zoomInButton, layout.NewSpacer(),
                                    canvas.NewText("faster", color.Black), controlBar.speedSlider, canvas.NewText("slower", color.Black))
 
     controlBar.ExtendBaseWidget(controlBar)
@@ -302,6 +343,23 @@ func (controlBar *ControlBar) StartSim() {
     controlBar.setRunStopText("Pause", theme.MediaPauseIcon())
     controlBar.life.Start()
     go controlBar.RunGame()
+}
+
+func (controlBar *ControlBar) DisableAutoZoom() {
+    controlBar.autoZoomCheckBox.SetChecked(false)
+    controlBar.life.SetAutoZoom(false)
+}
+
+func (controlBar *ControlBar) ZoomIn() {
+    controlBar.DisableAutoZoom()
+    controlBar.life.Zoom(1.0/ZoomFactor)
+    controlBar.life.Draw()
+}
+
+func (controlBar *ControlBar) ZoomOut() {
+    controlBar.DisableAutoZoom()
+    controlBar.life.Zoom(ZoomFactor)
+    controlBar.life.Draw()
 }
 
 func (controlBar *ControlBar) setRunStopText(label string, icon fyne.Resource) {
