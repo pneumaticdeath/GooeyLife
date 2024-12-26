@@ -30,7 +30,6 @@ type LifeSim struct {
     CellColor                           color.Color
     BackgroundColor                     color.Color
     autoZoom                            bool
-    StepTime                            float64
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
