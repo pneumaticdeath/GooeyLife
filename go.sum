@@ -245,6 +245,10 @@ github.com/pneumaticdeath/golife v0.0.0-20241226013311-026eb8eb8179 h1:B/C+RbRlR
 github.com/pneumaticdeath/golife v0.0.0-20241226013311-026eb8eb8179/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
 github.com/pneumaticdeath/golife v0.0.0-20241226030754-a3c16f7214e7 h1:25q2kWHacEQzwYsYq0rlmqM7BH69hk7q7agECWjiqAg=
 github.com/pneumaticdeath/golife v0.0.0-20241226030754-a3c16f7214e7/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
+github.com/pneumaticdeath/golife v0.0.2 h1:PAx51Q7LJUeOmjXPGjFUtix6FaTcz+1V9zIhELIDDYo=
+github.com/pneumaticdeath/golife v0.0.2/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
+github.com/pneumaticdeath/golife v0.0.3 h1:N5SdOThltFGSQcOB0nVJB0H+q8nCkhNneV9HED+bpsA=
+github.com/pneumaticdeath/golife v0.0.3/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=

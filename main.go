@@ -19,7 +19,10 @@ import (
     "fyne.io/fyne/v2/widget"
 )
 
-const ZoomFactor = 1.1
+const (
+    zoomFactor = 1.1
+    historySize = 100
+)
 
 type LifeSim struct {
     widget.BaseWidget
@@ -40,6 +43,7 @@ func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
 func NewLifeSim() *LifeSim {
     sim := &LifeSim{}
     sim.Game = golife.NewGame()
+    sim.Game.SetHistorySize(historySize)
     sim.BoxDisplayMin = golife.Cell{0, 0}
     sim.BoxDisplayMax = golife.Cell{10, 10}
     sim.drawingSurface = container.NewWithoutLayout()
@@ -308,8 +312,12 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.clk = NewLifeSimClock(sim)
 
     // Haven't implemented this functionality yet
-    controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {})
-    controlBar.backwardStepButton.Disable()
+    controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {
+        controlBar.StepBackward()
+    })
+    if len(controlBar.life.Game.History) == 0 {
+        controlBar.backwardStepButton.Disable()
+    }
 
     controlBar.runStopButton = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
         if controlBar.IsRunning() {
@@ -373,13 +381,13 @@ func (controlBar *ControlBar) DisableAutoZoom() {
 
 func (controlBar *ControlBar) ZoomIn() {
     controlBar.DisableAutoZoom()
-    controlBar.life.Zoom(1.0/ZoomFactor)
+    controlBar.life.Zoom(1.0/zoomFactor)
     controlBar.life.Draw()
 }
 
 func (controlBar *ControlBar) ZoomOut() {
     controlBar.DisableAutoZoom()
-    controlBar.life.Zoom(ZoomFactor)
+    controlBar.life.Zoom(zoomFactor)
     controlBar.life.Draw()
 }
 
@@ -408,6 +416,21 @@ func (controlBar *ControlBar) RunGame() {
 
 func (controlBar *ControlBar) StepForward() {
     controlBar.clk.Tick()
+    controlBar.backwardStepButton.Enable()
+}
+
+func (controlBar *ControlBar) StepBackward() {
+    if controlBar.IsRunning() {
+        controlBar.StopSim()
+    }
+    err := controlBar.life.Game.Previous()
+    if err != nil {
+        fmt.Println("Got error trying to step backwards", err)
+    }
+    if len(controlBar.life.Game.History) == 0 {
+        controlBar.backwardStepButton.Disable()
+    }
+    controlBar.life.Draw()
 }
 
 
@@ -423,6 +446,7 @@ func main() {
             dialog.ShowError(err, myWindow)
         } else {
             lifeSim.Game = newGame
+            lifeSim.Game.SetHistorySize(historySize)
         }
     } else {
         newGame, err := golife.Load("default.rle")
@@ -430,6 +454,7 @@ func main() {
             dialog.ShowError(err, myWindow)
         } else {
             lifeSim.Game = newGame
+            lifeSim.Game.SetHistorySize(historySize)
         }
     }
     lifeSim.ResizeToFit()
@@ -444,6 +469,7 @@ func main() {
                 dialog.ShowError(readErr, myWindow)
             } else {
                 lifeSim.Game = newGame
+                lifeSim.Game.SetHistorySize(historySize)
                 lifeSim.ResizeToFit()
                 lifeSim.Draw()
             }
