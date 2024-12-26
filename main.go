@@ -29,7 +29,6 @@ type LifeSim struct {
     drawingSurface                      *fyne.Container
     CellColor                           color.Color
     BackgroundColor                     color.Color
-    running                             bool
     autoZoom                            bool
     StepTime                            float64
 }
@@ -55,18 +54,6 @@ func NewLifeSim() *LifeSim {
 
 func (ls *LifeSim) MinSize() fyne.Size {
     return fyne.NewSize(150, 150)
-}
-
-func (ls *LifeSim) IsRunning() bool {
-    return ls.running
-}
-
-func (ls *LifeSim) Start() {
-    ls.running = true
-}
-
-func (ls *LifeSim) Stop() {
-    ls.running = false
 }
 
 func (ls *LifeSim) SetAutoZoom(az bool) {
@@ -308,6 +295,11 @@ type ControlBar struct {
     zoomInButton        *widget.Button
     speedSlider         *widget.Slider
     bar                 *fyne.Container
+    running             bool
+}
+
+func (controlBar *ControlBar) IsRunning() bool {
+    return controlBar.running
 }
 
 func NewControlBar(sim *LifeSim) *ControlBar {
@@ -321,7 +313,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.backwardStepButton.Disable()
 
     controlBar.runStopButton = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
-        if controlBar.life.IsRunning() {
+        if controlBar.IsRunning() {
             controlBar.StopSim()
         } else {
             controlBar.StartSim()
@@ -329,7 +321,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 
     controlBar.forwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipNextIcon(), func() {
-        if controlBar.life.IsRunning() {
+        if controlBar.IsRunning() {
             controlBar.StopSim()
         } else {
             controlBar.StepForward()
@@ -361,14 +353,18 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 }
 
 func (controlBar *ControlBar) StopSim() {
-    controlBar.life.Stop()
-    controlBar.setRunStopText("Run", theme.MediaPlayIcon())
+    if controlBar.IsRunning() {
+        controlBar.running = false
+        controlBar.setRunStopText("Run", theme.MediaPlayIcon())
+    }
 }
 
 func (controlBar *ControlBar) StartSim() {
-    controlBar.setRunStopText("Pause", theme.MediaPauseIcon())
-    controlBar.life.Start()
-    go controlBar.RunGame()
+    if !controlBar.IsRunning() {
+        controlBar.setRunStopText("Pause", theme.MediaPauseIcon())
+        controlBar.running = true
+        go controlBar.RunGame()
+    }
 }
 
 func (controlBar *ControlBar) DisableAutoZoom() {
@@ -403,7 +399,7 @@ func (controlBar *ControlBar) RunGame() {
     green := color.NRGBA{R: 0, G: 180, B: 0, A: 255}
 
     controlBar.life.CellColor = green
-    for controlBar.life.IsRunning() {
+    for controlBar.IsRunning() {
         controlBar.StepForward()
         time.Sleep(time.Duration(controlBar.speedSlider.Value)*time.Millisecond)
     }
@@ -413,8 +409,6 @@ func (controlBar *ControlBar) RunGame() {
 
 func (controlBar *ControlBar) StepForward() {
     controlBar.clk.Tick()
-    // controlBar.life.Game.Next()
-    // controlBar.life.Draw()
 }
 
 
