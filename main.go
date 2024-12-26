@@ -3,6 +3,7 @@ package main
 import (
     "fmt"
     "image/color"
+    "math"
     "os"
     "runtime"
     "time"
@@ -22,6 +23,7 @@ import (
 
 const (
     zoomFactor = 1.1
+    shiftFactor = 0.2
     historySize = 100
 )
 
@@ -187,6 +189,39 @@ func scale(min_v, max_v golife.Coord, factor float32) (golife.Coord, golife.Coor
     }
 }
 
+func shift(min_v, max_v golife.Coord, factor float64) (golife.Coord, golife.Coord) {
+    amount := golife.Coord(math.Floor(float64(max_v - min_v)*factor + 0.5))
+    if amount == 0 {
+        if factor < 0.0 {
+            amount = golife.Coord(-1)
+        } else if factor > 0.0 {
+            amount = golife.Coord(1)
+        }
+    }
+
+    return min_v + amount, max_v + amount
+}
+
+func(ls *LifeSim) ShiftLeft() {
+    ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = shift(ls.BoxDisplayMin.X, ls.BoxDisplayMax.X, -1*shiftFactor)
+    ls.Draw()
+}
+
+func(ls *LifeSim) ShiftRight() {
+    ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = shift(ls.BoxDisplayMin.X, ls.BoxDisplayMax.X, shiftFactor)
+    ls.Draw()
+}
+
+func(ls *LifeSim) ShiftUp() {
+    ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = shift(ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y, -1*shiftFactor)
+    ls.Draw()
+}
+
+func(ls *LifeSim) ShiftDown() {
+    ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = shift(ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y, shiftFactor)
+    ls.Draw()
+}
+
 func (ls *LifeSim) AutoZoom() {
     if ! ls.autoZoom {
         return 
@@ -347,7 +382,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     })
     controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
-    controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {controlBar.life.ResizeToFit()})
+    controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {controlBar.life.ResizeToFit(); controlBar.life.Draw()})
 
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
@@ -526,6 +561,24 @@ func main() {
         }
     }
     myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
+    keyPressHandler := func(keyEvent *fyne.KeyEvent) {
+        switch keyEvent.Name {
+        case fyne.KeyUp:
+            lifeSim.ShiftUp()
+        case fyne.KeyDown:
+            lifeSim.ShiftDown()
+        case fyne.KeyLeft:
+            lifeSim.ShiftLeft()
+        case fyne.KeyRight:
+            lifeSim.ShiftRight()
+        case fyne.KeyR:
+            toggleRun(nil)
+        default:
+            fmt.Println("Got unexpected key", keyEvent.Name)
+        }
+    }
+    myWindow.Canvas().SetOnTypedKey(keyPressHandler)
+
     myWindow.ShowAndRun()
 }
 
