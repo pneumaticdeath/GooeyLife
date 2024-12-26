@@ -273,9 +273,33 @@ func (statBar *StatusBar) Refresh() {
     statBar.BaseWidget.Refresh()
 }
 
+type LifeSimClock struct {
+    ticker chan bool
+    life   *LifeSim
+}
+
+func NewLifeSimClock(sim *LifeSim) *LifeSimClock {
+    clk := &LifeSimClock{ make(chan bool, 1), sim }
+    go clk.doTicks()
+    return clk
+}
+
+func (clk *LifeSimClock) doTicks() {
+    for {
+        <-clk.ticker
+        clk.life.Game.Next()
+        clk.life.Draw()
+    }
+}
+
+func (clk *LifeSimClock) Tick() {
+    clk.ticker <- true
+}
+
 type ControlBar struct {
     widget.BaseWidget
     life                *LifeSim
+    clk                 *LifeSimClock
     backwardStepButton  *widget.Button
     runStopButton       *widget.Button
     forwardStepButton   *widget.Button
@@ -289,6 +313,8 @@ type ControlBar struct {
 func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar := &ControlBar{}
     controlBar.life = sim
+
+    controlBar.clk = NewLifeSimClock(sim)
 
     // Haven't implemented this functionality yet
     controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {})
@@ -386,8 +412,9 @@ func (controlBar *ControlBar) RunGame() {
 }
 
 func (controlBar *ControlBar) StepForward() {
-    controlBar.life.Game.Next()
-    controlBar.life.Draw()
+    controlBar.clk.Tick()
+    // controlBar.life.Game.Next()
+    // controlBar.life.Draw()
 }
 
 
