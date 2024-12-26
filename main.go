@@ -118,7 +118,7 @@ func (ls *LifeSim) Draw() {
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
         cellPos := fyne.NewPos(window_x, window_y)
 
-        if window_x >= -0.5 && window_y >= -0.5 && window_x < windowSize.Width && window_y < windowSize.Height {
+        if window_x >= -0.5 && window_y >= -0.5 && window_x < windowSize.Width - ls.Scale/2.0 && window_y < windowSize.Height - ls.Scale/2.0 {
             if ls.Scale < 2.0 {
                 pixelPos := golife.Cell{golife.Coord(window_x), golife.Coord(window_y)}
                 pixels[pixelPos] += 1
