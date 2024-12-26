@@ -13,6 +13,7 @@ import (
     "fyne.io/fyne/v2/canvas"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/dialog"
+    "fyne.io/fyne/v2/driver/desktop"
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/theme"
     "fyne.io/fyne/v2/widget"
@@ -333,7 +334,7 @@ func (controlBar *ControlBar) StepForward() {
 
 
 func main() {
-    myApp := app.New()
+    myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
     myWindow := myApp.NewWindow("Conway's Game of Life")
 
     lifeSim := NewLifeSim()
@@ -385,10 +386,12 @@ func main() {
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
         dialog.ShowFileOpen(fileOpenCallback, myWindow)
     })
+    fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: fyne.KeyModifierSuper}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
         dialog.ShowFileSave(fileSaveCallback, myWindow)
     })
+    fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: fyne.KeyModifierSuper}
 
     fileMenu := fyne.NewMenu("File", fileOpenMenuItem, fileSaveMenuItem)
     mainMenu := fyne.NewMainMenu(fileMenu)
