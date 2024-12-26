@@ -12,6 +12,7 @@ import (
     "fyne.io/fyne/v2/app"
     "fyne.io/fyne/v2/canvas"
     "fyne.io/fyne/v2/container"
+    "fyne.io/fyne/v2/dialog"
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/theme"
     "fyne.io/fyne/v2/widget"
@@ -338,18 +339,67 @@ func main() {
     lifeSim := NewLifeSim()
 
     if len(os.Args) > 1 {
-        lifeSim.Game = golife.Load(os.Args[1])
+        newGame, err := golife.Load(os.Args[1])
+        if err != nil {
+            dialog.ShowError(err, myWindow)
+        } else {
+            lifeSim.Game = newGame
+        }
     } else {
-        lifeSim.Game = golife.Load("default.rle")
+        newGame, err := golife.Load("default.rle")
+        if err != nil {
+            dialog.ShowError(err, myWindow)
+        } else {
+            lifeSim.Game = newGame
+        }
     }
     lifeSim.ResizeToFit()
-    lifeSim.Refresh()
+
+    fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
+        if err != nil {
+            dialog.ShowError(err, myWindow)
+        } else if reader != nil {
+            newGame, readErr := golife.ReadRLE(reader)
+            defer reader.Close()
+            if readErr != nil {
+                dialog.ShowError(readErr, myWindow)
+            } else {
+                lifeSim.Game = newGame
+                lifeSim.ResizeToFit()
+                lifeSim.Draw()
+            }
+        } 
+    }
+
+    fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
+        if err != nil {
+            dialog.ShowError(err, myWindow)
+        } else if writer != nil {
+            write_err := lifeSim.Game.WriteRLE(writer)
+            if write_err != nil {
+                dialog.ShowError(write_err, myWindow)
+            }
+        }
+    }
+
+    fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
+        dialog.ShowFileOpen(fileOpenCallback, myWindow)
+    })
+
+    fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
+        dialog.ShowFileSave(fileSaveCallback, myWindow)
+    })
+
+    fileMenu := fyne.NewMenu("File", fileOpenMenuItem, fileSaveMenuItem)
+    mainMenu := fyne.NewMainMenu(fileMenu)
+
+    myWindow.SetMainMenu(mainMenu)
 
     controlBar := NewControlBar(lifeSim)
     statusBar := NewStatusBar(lifeSim)
     content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
-    myWindow.Resize(fyne.NewSize(500, 500))
     myWindow.SetContent(content)
+    myWindow.Resize(fyne.NewSize(500, 500))
 
     myWindow.ShowAndRun()
 }
