@@ -33,6 +33,8 @@ type LifeSim struct {
     Game                                *golife.Game
     BoxDisplayMin, BoxDisplayMax        golife.Cell
     Scale                               float32 // pixel per cell
+    LastStepTime                        time.Duration
+    LastDrawTime                        time.Duration
     drawingSurface                      *fyne.Container
     CellColor                           color.Color
     BackgroundColor                     color.Color
@@ -85,6 +87,8 @@ func (ls *LifeSim) Draw() {
         // fmt.Println("Can't draw on a zero_sized window")
         return
     }
+
+    start := time.Now()
 
     ls.drawLock.Lock()
     defer ls.drawLock.Unlock()
@@ -151,7 +155,7 @@ func (ls *LifeSim) Draw() {
     }
 
     ls.drawingSurface.Refresh()
-
+    ls.LastDrawTime = time.Since(start)
 }
 
 func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
@@ -264,6 +268,8 @@ type StatusBar struct {
     GenerationDisplay   *widget.Label
     CellCountDisplay    *widget.Label
     ScaleDisplay        *widget.Label
+    LastStepTimeDisplay *widget.Label
+    LastDrawTimeDisplay *widget.Label
     UpdateCadence       time.Duration
     bar                 *fyne.Container
 }
@@ -272,12 +278,16 @@ func NewStatusBar(sim *LifeSim) (*StatusBar) {
     genDisp := widget.NewLabel("")
     cellCountDisp := widget.NewLabel("")
     scaleDisp := widget.NewLabel("")
-    statBar := &StatusBar{life: sim, GenerationDisplay: genDisp, 
-                          CellCountDisplay: cellCountDisp, ScaleDisplay: scaleDisp,
-                          UpdateCadence: 20*time.Millisecond}
+    lastStepTimeDisp := widget.NewLabel("")
+    lastDrawTimeDisp := widget.NewLabel("")
+    statBar := &StatusBar{life: sim, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
+                          ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
+                          LastDrawTimeDisplay: lastDrawTimeDisp, UpdateCadence: 20*time.Millisecond}
     statBar.bar = container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
                                 layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay)
+                                layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay,
+                                layout.NewSpacer(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
+                                layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay)
 
     statBar.ExtendBaseWidget(statBar)
 
@@ -299,6 +309,8 @@ func (statBar *StatusBar) Update() {
     statBar.GenerationDisplay.SetText(fmt.Sprintf("%d", statBar.life.Game.Generation))
     statBar.CellCountDisplay.SetText(fmt.Sprintf("%d", len(statBar.life.Game.Population)))
     statBar.ScaleDisplay.SetText(fmt.Sprintf("%.3f", statBar.life.Scale))
+    statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastStepTime))
+    statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastDrawTime))
 }
 
 func (statBar *StatusBar) Refresh() {
@@ -320,7 +332,9 @@ func NewLifeSimClock(sim *LifeSim) *LifeSimClock {
 func (clk *LifeSimClock) doTicks() {
     for {
         <-clk.ticker
+        start := time.Now()
         clk.life.Game.Next()
+        clk.life.LastStepTime = time.Since(start)
         clk.life.Draw()
     }
 }
