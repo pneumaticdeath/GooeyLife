@@ -1,4 +1,4 @@
-package main
+
 
 import (
     "errors"
@@ -535,7 +535,8 @@ func main() {
     }
     lifeSim.ResizeToFit()
 
-    lifeFileExtentionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt"}}
+    lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt"}}
+    saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
 
     cwd, err := os.Getwd()
     if err != nil {
@@ -567,16 +568,23 @@ func main() {
     }
 
     fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
-        hasExt := lifeFileExtentionsFilter.Matches(writer.URI())
         if err != nil {
             dialog.ShowError(err, myWindow)
-        } else if !hasExt {
+        } else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
             dialog.ShowError(errors.New("File doesn't have proper extension"), myWindow)
+            writer.Close()
+            /* // Don't actually delete for now
+            delErr := storage.Delete(writer.URI())
+            if delErr != nil {
+                dialog.ShowError(delErr, myWindow)
+            }
+            */
         } else if writer != nil {
             write_err := lifeSim.Game.WriteRLE(writer)
             if write_err != nil {
                 dialog.ShowError(write_err, myWindow)
             }
+            writer.Close()
         }
     }
 
@@ -589,7 +597,7 @@ func main() {
 
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
-        fileOpen.SetFilter(lifeFileExtentionsFilter)
+        fileOpen.SetFilter(lifeFileExtensionsFilter)
         fileOpen.SetLocation(cwdURI)
         fileOpen.Show()
     })
@@ -597,7 +605,7 @@ func main() {
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
-        // fileSave.SetFilter(lifeFileExtentionsFilter)
+        fileSave.SetFilter(saveLifeExtensionsFilter)
         fileSave.SetLocation(cwdURI)
         fileSave.Show()
     })
