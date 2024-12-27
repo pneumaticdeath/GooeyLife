@@ -241,12 +241,6 @@ github.com/pkg/profile v1.7.0/go.mod h1:8Uer0jas47ZQMJ7VD+OHknK4YDY07LPUC6dEvqDj
 github.com/pkg/sftp v1.10.1/go.mod h1:lYOWFsE0bwd1+KfKJaKeuokY15vzFx25BLbzYYoAxZI=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/pneumaticdeath/golife v0.0.0-20241226013311-026eb8eb8179 h1:B/C+RbRlRlgyMT3zb9rEJPaylMedJmR0HQw6wWZKF5s=
-github.com/pneumaticdeath/golife v0.0.0-20241226013311-026eb8eb8179/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
-github.com/pneumaticdeath/golife v0.0.0-20241226030754-a3c16f7214e7 h1:25q2kWHacEQzwYsYq0rlmqM7BH69hk7q7agECWjiqAg=
-github.com/pneumaticdeath/golife v0.0.0-20241226030754-a3c16f7214e7/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
-github.com/pneumaticdeath/golife v0.0.2 h1:PAx51Q7LJUeOmjXPGjFUtix6FaTcz+1V9zIhELIDDYo=
-github.com/pneumaticdeath/golife v0.0.2/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
 github.com/pneumaticdeath/golife v0.0.3 h1:N5SdOThltFGSQcOB0nVJB0H+q8nCkhNneV9HED+bpsA=
 github.com/pneumaticdeath/golife v0.0.3/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=

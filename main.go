@@ -50,7 +50,7 @@ func NewLifeSim() *LifeSim {
     sim.BoxDisplayMin = golife.Cell{0, 0}
     sim.BoxDisplayMax = golife.Cell{10, 10}
     sim.drawingSurface = container.NewWithoutLayout()
-    sim.CellColor = color.NRGBA{R: 0, G: 0, B: 180, A: 255}
+    sim.CellColor = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
     sim.BackgroundColor = color.Black
     // sim.BackgroundColor = color.White
     sim.autoZoom = true
@@ -440,9 +440,9 @@ func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (controlBar *ControlBar) RunGame() {
-    // red := color.NRGBA{R: 180, G: 0, B: 0, A: 255}
-    blue := color.NRGBA{R: 0, G: 0, B: 180, A: 255}
-    green := color.NRGBA{R: 0, G: 180, B: 0, A: 255}
+    // red := color.NRGBA{R: 255, G: 0, B: 0, A: 255}
+    blue := color.NRGBA{R: 0, G: 0, B: 255, A: 255}
+    green := color.NRGBA{R: 0, G: 255, B: 0, A: 255}
 
     controlBar.life.CellColor = green
     for controlBar.IsRunning() {
