@@ -509,13 +509,7 @@ func main() {
             lifeSim.Game.SetHistorySize(historySize)
         }
     } else {
-        newGame, err := golife.Load("default.rle")
-        if err != nil {
-            dialog.ShowError(err, myWindow)
-        } else {
-            lifeSim.Game = newGame
-            lifeSim.Game.SetHistorySize(historySize)
-        }
+        lifeSim.Game = golife.NewGame()
     }
     lifeSim.ResizeToFit()
 
