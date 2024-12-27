@@ -1,0 +1,1 @@
+sudo apt install libx11-dev libxcursor-dev libxinerama-dev libxi-dev libxxf86vm-dev
