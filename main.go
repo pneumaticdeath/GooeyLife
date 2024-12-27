@@ -497,12 +497,17 @@ func (controlBar *ControlBar) StepBackward() {
     controlBar.life.Draw()
 }
 
-type LifeExtensionsFileFilter struct {
+/* The standard FileExtensionFilter only handles simple 
+   extensinos (e.g. ".rle") but not compound extensions
+   like ".rle.txt" that are sometimes the result of 
+   browsers saving RLE files
+*/
+type LongExtensionsFileFilter struct {
     storage.FileFilter
     Extensions []string
 }
 
-func (filter *LifeExtensionsFileFilter) Matches(uri fyne.URI) bool {
+func (filter *LongExtensionsFileFilter) Matches(uri fyne.URI) bool {
     for _, ext := range filter.Extensions {
         if strings.HasSuffix(uri.Name(), ext) {
             return true
@@ -530,7 +535,7 @@ func main() {
     }
     lifeSim.ResizeToFit()
 
-    lifeFileExtentionsFilter := &LifeExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
+    lifeFileExtentionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
 
     cwd, err := os.Getwd()
     if err != nil {
