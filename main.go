@@ -6,6 +6,7 @@ import (
     "math"
     "os"
     "runtime"
+    "sync"
     "time"
 
     "github.com/pneumaticdeath/golife"
@@ -36,6 +37,7 @@ type LifeSim struct {
     CellColor                           color.Color
     BackgroundColor                     color.Color
     autoZoom                            bool
+    drawLock                            sync.Mutex
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
@@ -84,6 +86,11 @@ func (ls *LifeSim) Draw() {
         return
     }
 
+    ls.drawLock.Lock()
+    defer ls.drawLock.Unlock()
+
+    population := ls.Game.Population // saving the current population in case the underlying population changes during draw
+
     displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
     displayHeight := float32(ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + 1)
 
@@ -106,7 +113,7 @@ func (ls *LifeSim) Draw() {
 
     ls.drawingSurface.Add(background)
 
-    for cell, _ := range ls.Game.Population {
+    for cell, _ := range population {
         window_x := windowCenter.X + ls.Scale * (float32(cell.X) - displayCenter.X) - ls.Scale/2.0
         window_y := windowCenter.Y + ls.Scale * (float32(cell.Y) - displayCenter.Y) - ls.Scale/2.0
         cellPos := fyne.NewPos(window_x, window_y)
@@ -552,7 +559,7 @@ func main() {
     statusBar := NewStatusBar(lifeSim)
     content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
     myWindow.SetContent(content)
-    myWindow.Resize(fyne.NewSize(500, 500))
+    myWindow.Resize(fyne.NewSize(800, 500))
     toggleRun := func(shortcut fyne.Shortcut) {
         if controlBar.IsRunning() {
             controlBar.StopSim()
