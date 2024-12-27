@@ -1,11 +1,13 @@
 package main
 
 import (
+    "errors"
     "fmt"
     "image/color"
     "math"
     "os"
     "runtime"
+    "strings"
     "sync"
     "time"
 
@@ -18,6 +20,8 @@ import (
     "fyne.io/fyne/v2/dialog"
     "fyne.io/fyne/v2/driver/desktop"
     "fyne.io/fyne/v2/layout"
+    "fyne.io/fyne/v2/storage"
+    "fyne.io/fyne/v2/storage/repository"
     "fyne.io/fyne/v2/theme"
     "fyne.io/fyne/v2/widget"
 )
@@ -493,6 +497,19 @@ func (controlBar *ControlBar) StepBackward() {
     controlBar.life.Draw()
 }
 
+type LifeExtensionsFileFilter struct {
+    storage.FileFilter
+    Extensions []string
+}
+
+func (filter *LifeExtensionsFileFilter) Matches(uri fyne.URI) bool {
+    for _, ext := range filter.Extensions {
+        if strings.HasSuffix(uri.Name(), ext) {
+            return true
+        }
+    }
+    return false
+}
 
 func main() {
     myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
@@ -513,6 +530,18 @@ func main() {
     }
     lifeSim.ResizeToFit()
 
+    lifeFileExtentionsFilter := &LifeExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
+
+    cwd, err := os.Getwd()
+    if err != nil {
+        dialog.ShowError(err, myWindow)
+    }
+    tmpURI := repository.NewFileURI(cwd)
+    cwdURI, err := storage.ListerForURI(tmpURI)
+    if err != nil {
+        dialog.ShowError(err, myWindow)
+    }
+
     fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
         if err != nil {
             dialog.ShowError(err, myWindow)
@@ -523,6 +552,7 @@ func main() {
                 dialog.ShowError(readErr, myWindow)
             } else {
                 lifeSim.Game = newGame
+                lifeSim.Game.Filename = reader.URI().Name()
                 lifeSim.Game.SetHistorySize(historySize)
                 lifeSim.ResizeToFit()
                 lifeSim.Draw()
@@ -531,8 +561,11 @@ func main() {
     }
 
     fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
+        hasExt := lifeFileExtentionsFilter.Matches(writer.URI())
         if err != nil {
             dialog.ShowError(err, myWindow)
+        } else if !hasExt {
+            dialog.ShowError(errors.New("File doesn't have proper extension"), myWindow)
         } else if writer != nil {
             write_err := lifeSim.Game.WriteRLE(writer)
             if write_err != nil {
@@ -549,12 +582,18 @@ func main() {
     }
 
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
-        dialog.ShowFileOpen(fileOpenCallback, myWindow)
+        fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
+        fileOpen.SetFilter(lifeFileExtentionsFilter)
+        fileOpen.SetLocation(cwdURI)
+        fileOpen.Show()
     })
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
-        dialog.ShowFileSave(fileSaveCallback, myWindow)
+        fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
+        // fileSave.SetFilter(lifeFileExtentionsFilter)
+        fileSave.SetLocation(cwdURI)
+        fileSave.Show()
     })
     fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
 
