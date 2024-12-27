@@ -535,7 +535,7 @@ func main() {
     }
     lifeSim.ResizeToFit()
 
-    lifeFileExtentionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
+    lifeFileExtentionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt"}}
 
     cwd, err := os.Getwd()
     if err != nil {
@@ -551,7 +551,8 @@ func main() {
         if err != nil {
             dialog.ShowError(err, myWindow)
         } else if reader != nil {
-            newGame, readErr := golife.ReadRLE(reader)
+            lifeReader := golife.FindReader(reader.URI().Name())
+            newGame, readErr := lifeReader(reader)
             defer reader.Close()
             if readErr != nil {
                 dialog.ShowError(readErr, myWindow)

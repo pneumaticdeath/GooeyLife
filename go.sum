@@ -243,6 +243,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pneumaticdeath/golife v0.0.3 h1:N5SdOThltFGSQcOB0nVJB0H+q8nCkhNneV9HED+bpsA=
 github.com/pneumaticdeath/golife v0.0.3/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
+github.com/pneumaticdeath/golife v0.0.4 h1:eViqqaBeD3uC4gju4Hg6HEby6vhdC7h51jf5SjzSj84=
+github.com/pneumaticdeath/golife v0.0.4/go.mod h1:hJ5L8bEagBzNXpGdWzIOO6gfDEpkkR2dEuop9jJCsYo=
 github.com/posener/complete v1.1.1/go.mod h1:em0nMJCgc9GFtwrmVmEMR/ZL6WyhyjMBndrE9hABlRI=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6LYCDYWNEvQ=
