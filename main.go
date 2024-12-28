@@ -594,7 +594,10 @@ func main() {
         modKey = fyne.KeyModifierControl
     }
 
+    controlBar := NewControlBar(lifeSim)
+
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
+        controlBar.StopSim()
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
         fileOpen.SetFilter(lifeFileExtensionsFilter)
         fileOpen.SetLocation(cwdURI)
@@ -603,6 +606,7 @@ func main() {
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
+        controlBar.StopSim()
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
         fileSave.SetFilter(saveLifeExtensionsFilter)
         fileSave.SetLocation(cwdURI)
@@ -615,7 +619,6 @@ func main() {
 
     myWindow.SetMainMenu(mainMenu)
 
-    controlBar := NewControlBar(lifeSim)
     statusBar := NewStatusBar(lifeSim)
     content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
     myWindow.SetContent(content)
