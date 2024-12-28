@@ -391,7 +391,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.forwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipNextIcon(), func() {
         if controlBar.IsRunning() {
-            controlBar.StopSim()
+            controlBar.StopSim()  // If we're running, we've probably already calculated the next step
         } else {
             controlBar.StepForward()
         }
@@ -411,7 +411,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
-    controlBar.speedSlider = widget.NewSlider(1.5, 500.0)
+    controlBar.speedSlider = widget.NewSlider(1.5, 500.0) // in milliseconds
     controlBar.speedSlider.SetValue(200.0)
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
