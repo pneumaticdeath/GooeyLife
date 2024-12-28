@@ -410,8 +410,8 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
-    controlBar.speedSlider = widget.NewSlider(1.5, 500.0) // in milliseconds
-    controlBar.speedSlider.SetValue(200.0)
+    controlBar.speedSlider = widget.NewSlider(-1.0, 3.0)  // log_10 scale in milliseconds
+    controlBar.speedSlider.SetValue(1.5)
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
                                    controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
@@ -471,7 +471,7 @@ func (controlBar *ControlBar) RunGame() {
     controlBar.life.CellColor = green
     for controlBar.IsRunning() {
         controlBar.StepForward()
-        time.Sleep(time.Duration(controlBar.speedSlider.Value)*time.Millisecond)
+        time.Sleep(time.Duration(math.Pow(10.0,controlBar.speedSlider.Value))*time.Millisecond)
     }
     controlBar.life.CellColor = blue
     controlBar.life.Draw()
