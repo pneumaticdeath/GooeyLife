@@ -429,6 +429,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.speedSlider = widget.NewSlider(-1.0, 3.0)  // log_10 scale in milliseconds
     controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
+    controlBar.speedSlider.Step = (3.0 - -1.0)/12
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
                                    controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
