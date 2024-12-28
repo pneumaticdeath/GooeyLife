@@ -334,7 +334,7 @@ func NewLifeSimClock(sim *LifeSim) *LifeSimClock {
 
 func (clk *LifeSimClock) doTicks() {
     for {
-        <-clk.ticker
+        <-clk.ticker   // Will block waiting for a clock tick
         start := time.Now()
         clk.life.Game.Next()
         clk.life.LastStepTime = time.Since(start)
@@ -343,7 +343,7 @@ func (clk *LifeSimClock) doTicks() {
 }
 
 func (clk *LifeSimClock) Tick() {
-    clk.ticker <- true
+    clk.ticker <- true   // Will block if the last tick hasn't been consumed yet
 }
 
 type ControlBar struct {
@@ -411,7 +411,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
     controlBar.speedSlider = widget.NewSlider(-1.0, 3.0)  // log_10 scale in milliseconds
-    controlBar.speedSlider.SetValue(2.0)
+    controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
 
     controlBar.bar = container.New(layout.NewHBoxLayout(), 
                                    controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
@@ -479,7 +479,9 @@ func (controlBar *ControlBar) RunGame() {
 
 func (controlBar *ControlBar) StepForward() {
     controlBar.clk.Tick()
-    controlBar.backwardStepButton.Enable()
+    if len(controlBar.life.Game.History) > 0 {
+        controlBar.backwardStepButton.Enable()  // We might have history now
+    }
 }
 
 func (controlBar *ControlBar) StepBackward() {
