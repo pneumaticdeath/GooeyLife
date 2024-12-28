@@ -47,7 +47,6 @@ type LifeSim struct {
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
-    ls.Draw()
     return widget.NewSimpleRenderer(ls.drawingSurface)
 }
 
