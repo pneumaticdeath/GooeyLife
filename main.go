@@ -293,13 +293,14 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) (*StatusBar) {
                           LastDrawTimeDisplay: lastDrawTimeDisp, TargetFPSDisplay: targetFPSDisp,
                           ActualFPSDisplay: actualFPSDisp, UpdateCadence: 20.0*time.Millisecond}
 
-    statBar.bar = container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Target FPS:"), statBar.TargetFPSDisplay,
-                                widget.NewLabel("Actual FPS:"), statBar.ActualFPSDisplay)
+    statBar.bar = container.New(layout.NewVBoxLayout(),
+                                container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
+                                              layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
+                                              layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
+                                container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
+                                              layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
+                                              layout.NewSpacer(), widget.NewLabel("Target FPS:"), statBar.TargetFPSDisplay,
+                                              widget.NewLabel("Actual FPS:"), statBar.ActualFPSDisplay))
 
     statBar.ExtendBaseWidget(statBar)
 
