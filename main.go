@@ -432,10 +432,12 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
     controlBar.speedSlider.Step = (3.0 - -1.0)/12
 
-    controlBar.bar = container.New(layout.NewHBoxLayout(), 
-                                   controlBar.backwardStepButton, controlBar.runStopButton, controlBar.forwardStepButton, layout.NewSpacer(),
-                                   controlBar.zoomOutButton, controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton, layout.NewSpacer(),
-                                   canvas.NewText("faster", color.Black), controlBar.speedSlider, canvas.NewText("slower", color.Black))
+    fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
+    controlBar.bar = container.New(layout.NewVBoxLayout(),
+                                   container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
+                                                 controlBar.forwardStepButton, layout.NewSpacer(), controlBar.zoomOutButton,
+                                                 controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton),
+                                   container.New(layout.NewGridLayout(3), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
     controlBar.ExtendBaseWidget(controlBar)
     return controlBar
