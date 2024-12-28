@@ -268,29 +268,38 @@ func (ls *LifeSim) ResizeToFit() {
 type StatusBar struct {
     widget.BaseWidget
     life                *LifeSim
+    control             *ControlBar
     GenerationDisplay   *widget.Label
     CellCountDisplay    *widget.Label
     ScaleDisplay        *widget.Label
     LastStepTimeDisplay *widget.Label
     LastDrawTimeDisplay *widget.Label
+    TargetFPSDisplay    *widget.Label
+    ActualFPSDisplay    *widget.Label
     UpdateCadence       time.Duration
     bar                 *fyne.Container
 }
 
-func NewStatusBar(sim *LifeSim) (*StatusBar) {
+func NewStatusBar(sim *LifeSim, cb *ControlBar) (*StatusBar) {
     genDisp := widget.NewLabel("")
     cellCountDisp := widget.NewLabel("")
     scaleDisp := widget.NewLabel("")
     lastStepTimeDisp := widget.NewLabel("")
     lastDrawTimeDisp := widget.NewLabel("")
-    statBar := &StatusBar{life: sim, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
+    targetFPSDisp    := widget.NewLabel("")
+    actualFPSDisp    := widget.NewLabel("")
+    statBar := &StatusBar{life: sim, control: cb, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
                           ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
-                          LastDrawTimeDisplay: lastDrawTimeDisp, UpdateCadence: 20*time.Millisecond}
+                          LastDrawTimeDisplay: lastDrawTimeDisp, TargetFPSDisplay: targetFPSDisp,
+                          ActualFPSDisplay: actualFPSDisp, UpdateCadence: 20.0*time.Millisecond}
+
     statBar.bar = container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
                                 layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
                                 layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay,
                                 layout.NewSpacer(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
-                                layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay)
+                                layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
+                                layout.NewSpacer(), widget.NewLabel("Target FPS:"), statBar.TargetFPSDisplay,
+                                widget.NewLabel("Actual FPS:"), statBar.ActualFPSDisplay)
 
     statBar.ExtendBaseWidget(statBar)
 
@@ -314,6 +323,9 @@ func (statBar *StatusBar) Update() {
     statBar.ScaleDisplay.SetText(fmt.Sprintf("%.3f", statBar.life.Scale))
     statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastStepTime))
     statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastDrawTime))
+    targetUpdateCadence := time.Duration(math.Pow(10.0,statBar.control.speedSlider.Value))*time.Millisecond
+    statBar.TargetFPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/targetUpdateCadence.Seconds()))
+    statBar.ActualFPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/statBar.control.updateCadence.Seconds()))
 }
 
 func (statBar *StatusBar) Refresh() {
@@ -350,6 +362,8 @@ type ControlBar struct {
     widget.BaseWidget
     life                *LifeSim
     clk                 *LifeSimClock
+    lastUpdateTime      time.Time
+    updateCadence       time.Duration
     backwardStepButton  *widget.Button
     runStopButton       *widget.Button
     forwardStepButton   *widget.Button
@@ -371,6 +385,9 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.life = sim
 
     controlBar.clk = NewLifeSimClock(sim)
+
+    controlBar.lastUpdateTime = time.Now()
+    controlBar.updateCadence = 100*time.Millisecond
 
     // Haven't implemented this functionality yet
     controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {
@@ -478,6 +495,8 @@ func (controlBar *ControlBar) RunGame() {
 }
 
 func (controlBar *ControlBar) StepForward() {
+    controlBar.updateCadence = time.Since(controlBar.lastUpdateTime)
+    controlBar.lastUpdateTime = time.Now()
     controlBar.clk.Tick()
     if len(controlBar.life.Game.History) > 0 {
         controlBar.backwardStepButton.Enable()  // We might have history now
@@ -621,7 +640,7 @@ func main() {
 
     myWindow.SetMainMenu(mainMenu)
 
-    statusBar := NewStatusBar(lifeSim)
+    statusBar := NewStatusBar(lifeSim, controlBar)
     content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
     myWindow.SetContent(content)
     myWindow.Resize(fyne.NewSize(800, 500))
