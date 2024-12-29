@@ -113,12 +113,13 @@ func (ls *LifeSim) Draw() {
     pixels := make(map[golife.Cell]int32)
     maxDens := 1
 
-    ls.drawingSurface.RemoveAll()
     background := canvas.NewRectangle(ls.BackgroundColor)
     background.Resize(windowSize)
     background.Move(fyne.NewPos(0,0))
 
-    ls.drawingSurface.Add(background)
+    newObjects := make([]fyne.CanvasObject, 0, 1024)
+
+    newObjects = append(newObjects, background)
 
     for cell, _ := range population {
         window_x := windowCenter.X + ls.Scale * (float32(cell.X) - displayCenter.X) - ls.Scale/2.0
@@ -137,7 +138,7 @@ func (ls *LifeSim) Draw() {
                 cellCircle.Resize(cellSize)
                 cellCircle.Move(cellPos)
 
-                ls.drawingSurface.Add(cellCircle)
+                newObjects = append(newObjects, cellCircle)
             }
         }
     }
@@ -153,8 +154,13 @@ func (ls *LifeSim) Draw() {
             pixel := canvas.NewRectangle(pixelColor)
             pixel.Resize(fyne.NewSize(2, 2))
             pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
-            ls.drawingSurface.Add(pixel)
+            newObjects = append(newObjects, pixel)
         }
+    }
+
+    ls.drawingSurface.RemoveAll()
+    for _, obj := range newObjects {
+        ls.drawingSurface.Add(obj)
     }
 
     ls.drawingSurface.Refresh()
