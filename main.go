@@ -499,16 +499,15 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle","RoundedRectangle","Circle"}, func (selection string) {controlBar.life.GlyphStyle = selection; controlBar.life.Draw()})
     controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
 
-    controlBar.speedSlider = widget.NewSlider(0.0, 3.0)  // log_10 scale in milliseconds
+    controlBar.speedSlider = widget.NewSlider(0.5, 3.0)   // log_10 scale in milliseconds
     controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
-    controlBar.speedSlider.Step = (3.0 - 0.0)/12
+    controlBar.speedSlider.Step = (3.0 - 0.5)/12
 
     fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
     controlBar.bar = container.New(layout.NewGridLayout(2),
                                    container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
-                                                 controlBar.forwardStepButton, layout.NewSpacer(), controlBar.zoomOutButton,
-                                                 controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton,
-                                                 controlBar.glyphSelector),
+                                                 controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.autoZoomCheckBox,
+                                                 controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector),
                                    container.New(layout.NewGridLayout(3), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
     controlBar.ExtendBaseWidget(controlBar)
