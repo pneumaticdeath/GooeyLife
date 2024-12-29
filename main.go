@@ -25,6 +25,7 @@ import (
     "fyne.io/fyne/v2/storage/repository"
     "fyne.io/fyne/v2/theme"
     "fyne.io/fyne/v2/widget"
+    xlayout "fyne.io/x/fyne/layout"
 )
 
 const (
@@ -508,7 +509,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
                                    container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
                                                  controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.autoZoomCheckBox,
                                                  controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector),
-                                   container.New(layout.NewGridLayout(3), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
+                                   container.New(xlayout.NewHPortion([]float64{0.2,0.6,0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
     controlBar.ExtendBaseWidget(controlBar)
     return controlBar
