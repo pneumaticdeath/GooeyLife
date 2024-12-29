@@ -48,6 +48,7 @@ type LifeSim struct {
     LastDrawTime                        time.Duration   // How long it to draw the last frame
     drawingSurface                      *fyne.Container // The actual drawing surface
     CellColor                           color.Color     // Color the cells should be draw in
+    GlyphStyle                          string          // One of "Rectange", "RoundedRectangle" or "Circle"
     BackgroundColor                     color.Color     // Should probably be derived from the theme
     autoZoom                            binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
     drawLock                            sync.Mutex      // Make sure only one goroutine is drawing at any given time
@@ -66,6 +67,7 @@ func NewLifeSim() *LifeSim {
     sim.BoxDisplayMax = golife.Cell{10, 10}
     sim.drawingSurface = container.NewWithoutLayout()
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
+    sim.GlyphStyle = "RoundedRectangle"
     sim.BackgroundColor = color.Black
     // sim.BackgroundColor = color.White
     sim.autoZoom = binding.NewBool()
@@ -184,11 +186,23 @@ func (ls *LifeSim) Draw() {
                     maxDens = int(pixels[pixelPos])
                 }
             } else {
-                cellCircle := canvas.NewCircle(ls.CellColor)
-                cellCircle.Resize(cellSize)
-                cellCircle.Move(cellPos)
+                var cellGlyph fyne.CanvasObject
+                switch ls.GlyphStyle {
+                case "Rectangle":
+                    cellGlyph = canvas.NewRectangle(ls.CellColor)
+                case "RoundedRectangle":
+                    tmpRect := canvas.NewRectangle(ls.CellColor)
+                    tmpRect.CornerRadius = ls.Scale/5.0
+                    cellGlyph = tmpRect
+                case "Circle":
+                    cellGlyph = canvas.NewCircle(ls.CellColor)
+                default:
+                    cellGlyph = canvas.NewLine(ls.CellColor)
+                }
+                cellGlyph.Resize(cellSize)
+                cellGlyph.Move(cellPos)
 
-                newObjects = append(newObjects, cellCircle)
+                newObjects = append(newObjects, cellGlyph)
             }
         }
     }
@@ -430,6 +444,7 @@ type ControlBar struct {
     autoZoomCheckBox    *widget.Check
     zoomFitButton       *widget.Button
     zoomInButton        *widget.Button
+    glyphSelector       *widget.Select
     speedSlider         *widget.Slider
     bar                 *fyne.Container
     running             bool
@@ -481,6 +496,9 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
+    controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle","RoundedRectangle","Circle"}, func (selection string) {controlBar.life.GlyphStyle = selection; controlBar.life.Draw()})
+    controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
+
     controlBar.speedSlider = widget.NewSlider(0.0, 3.0)  // log_10 scale in milliseconds
     controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
     controlBar.speedSlider.Step = (3.0 - 0.0)/12
@@ -489,7 +507,8 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.bar = container.New(layout.NewGridLayout(2),
                                    container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
                                                  controlBar.forwardStepButton, layout.NewSpacer(), controlBar.zoomOutButton,
-                                                 controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton),
+                                                 controlBar.autoZoomCheckBox, controlBar.zoomFitButton, controlBar.zoomInButton,
+                                                 controlBar.glyphSelector),
                                    container.New(layout.NewGridLayout(3), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
     controlBar.ExtendBaseWidget(controlBar)
