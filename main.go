@@ -15,6 +15,7 @@ import (
 
     "fyne.io/fyne/v2"
     "fyne.io/fyne/v2/app"
+    "fyne.io/fyne/v2/data/binding"
     "fyne.io/fyne/v2/canvas"
     "fyne.io/fyne/v2/container"
     "fyne.io/fyne/v2/dialog"
@@ -43,7 +44,7 @@ type LifeSim struct {
     drawingSurface                      *fyne.Container
     CellColor                           color.Color
     BackgroundColor                     color.Color
-    autoZoom                            bool
+    autoZoom                            binding.Bool
     drawLock                            sync.Mutex
 }
 
@@ -61,7 +62,9 @@ func NewLifeSim() *LifeSim {
     sim.CellColor = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
     sim.BackgroundColor = color.Black
     // sim.BackgroundColor = color.White
-    sim.autoZoom = true
+    sim.autoZoom = binding.NewBool()
+    sim.autoZoom.Set(true)
+    sim.autoZoom.AddListener(binding.NewDataListener(func () { sim.Draw() }))
     sim.ExtendBaseWidget(sim)
     return sim
 }
@@ -71,11 +74,12 @@ func (ls *LifeSim) MinSize() fyne.Size {
 }
 
 func (ls *LifeSim) SetAutoZoom(az bool) {
-    ls.autoZoom = az
+    ls.autoZoom.Set(az)
 }
 
 func (ls *LifeSim) IsAutoZoom() bool {
-    return ls.autoZoom
+    az, _ := ls.autoZoom.Get()
+    return az
 }
 
 func (ls *LifeSim) Resize(size fyne.Size) {
@@ -285,7 +289,7 @@ func(ls *LifeSim) ShiftDown() {
 }
 
 func (ls *LifeSim) AutoZoom() {
-    if ! ls.autoZoom {
+    if ! ls.IsAutoZoom() {
         return 
     }
 
@@ -464,21 +468,17 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
     controlBar.zoomOutButton = widget.NewButtonWithIcon("", theme.ZoomOutIcon(), func () {controlBar.ZoomOut()})
 
-    controlBar.autoZoomCheckBox = widget.NewCheck("Auto Zoom", func(checked bool) { 
-        controlBar.life.SetAutoZoom(checked) 
-        if controlBar.life.IsAutoZoom() {
-            controlBar.life.Draw()
-        }
-    })
+    controlBar.autoZoomCheckBox = widget.NewCheckWithData("Auto Zoom", controlBar.life.autoZoom)
+
     controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
     controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {controlBar.life.ResizeToFit(); controlBar.life.Draw()})
 
     controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func () {controlBar.ZoomIn()})
 
-    controlBar.speedSlider = widget.NewSlider(-1.0, 3.0)  // log_10 scale in milliseconds
+    controlBar.speedSlider = widget.NewSlider(0.0, 3.0)  // log_10 scale in milliseconds
     controlBar.speedSlider.SetValue(2.0)                  // default to 100ms clock tick time
-    controlBar.speedSlider.Step = (3.0 - -1.0)/12
+    controlBar.speedSlider.Step = (3.0 - 0.0)/12
 
     fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
     controlBar.bar = container.New(layout.NewGridLayout(2),
