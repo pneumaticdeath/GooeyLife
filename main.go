@@ -33,21 +33,27 @@ const (
     historySize = 100
 )
 
+/*
+ LifeSim - encapsulates everything about the simulation and displaying it on 
+ a container
+*/
+
 type LifeSim struct {
     widget.BaseWidget
 
-    Game                                *golife.Game
-    BoxDisplayMin, BoxDisplayMax        golife.Cell
-    Scale                               float32 // pixel per cell
-    LastStepTime                        time.Duration
-    LastDrawTime                        time.Duration
-    drawingSurface                      *fyne.Container
-    CellColor                           color.Color
-    BackgroundColor                     color.Color
-    autoZoom                            binding.Bool
-    drawLock                            sync.Mutex
+    Game                                *golife.Game    // The underlying GameOfLife engine
+    BoxDisplayMin, BoxDisplayMax        golife.Cell     // The viewport into the game
+    Scale                               float32         // points per cell
+    LastStepTime                        time.Duration   // Statistic of time taken to calculate the last generation
+    LastDrawTime                        time.Duration   // How long it to draw the last frame
+    drawingSurface                      *fyne.Container // The actual drawing surface
+    CellColor                           color.Color     // Color the cells should be draw in
+    BackgroundColor                     color.Color     // Should probably be derived from the theme
+    autoZoom                            binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
+    drawLock                            sync.Mutex      // Make sure only one goroutine is drawing at any given time
 }
 
+// For widget.Basewidget compatibility
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
     return widget.NewSimpleRenderer(ls.drawingSurface)
 }
@@ -442,7 +448,6 @@ func NewControlBar(sim *LifeSim) *ControlBar {
     controlBar.lastUpdateTime = time.Now()
     controlBar.updateCadence = 100*time.Millisecond
 
-    // Haven't implemented this functionality yet
     controlBar.backwardStepButton = widget.NewButtonWithIcon("", theme.MediaSkipPreviousIcon(), func() {
         controlBar.StepBackward()
     })
@@ -607,7 +612,7 @@ func main() {
     }
     lifeSim.ResizeToFit()
 
-    lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt"}}
+    lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt", ".cells", ".cells.txt"}}
     saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
 
     cwd, err := os.Getwd()
