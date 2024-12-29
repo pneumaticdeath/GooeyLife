@@ -158,6 +158,8 @@ func (ls *LifeSim) Draw() {
         }
     }
 
+    // By reducing the timespan between the removal and re-adding of the objects,
+    // flicker is reduced or eliminated.
     ls.drawingSurface.RemoveAll()
     for _, obj := range newObjects {
         ls.drawingSurface.Add(obj)
