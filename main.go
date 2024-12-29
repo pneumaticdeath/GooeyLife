@@ -34,6 +34,7 @@ const (
 
 type LifeSim struct {
     widget.BaseWidget
+
     Game                                *golife.Game
     BoxDisplayMin, BoxDisplayMax        golife.Cell
     Scale                               float32 // pixel per cell
@@ -80,6 +81,45 @@ func (ls *LifeSim) IsAutoZoom() bool {
 func (ls *LifeSim) Resize(size fyne.Size) {
     ls.Draw()
     ls.BaseWidget.Resize(size)
+}
+
+func (ls *LifeSim) Dragged(e *fyne.DragEvent) {
+    if e.Dragged.IsZero() {
+        return
+    }
+    ls.SetAutoZoom(false)
+    dx, dy := e.Dragged.Components()
+    rel_cells_x := dx/ls.Scale
+    rel_cells_y := dy/ls.Scale
+    var cells_x, cells_y golife.Coord
+    switch {
+    case rel_cells_x > -0.1 && rel_cells_x < 0.1:
+        cells_x = golife.Coord(0)
+    case rel_cells_x < 0:
+        cells_x = golife.Coord(math.Floor(float64(rel_cells_x)))
+    default:
+        cells_x = golife.Coord(math.Ceil(float64(rel_cells_x)))
+    }
+    switch {
+    case rel_cells_y > -0.1 && rel_cells_y < 0.1:
+        cells_y = golife.Coord(0)
+    case rel_cells_y < 0:
+        cells_y = golife.Coord(math.Floor(float64(rel_cells_y)))
+    default:
+        cells_y = golife.Coord(math.Ceil(float64(rel_cells_y)))
+    }
+
+    ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = ls.BoxDisplayMin.X - cells_x, ls.BoxDisplayMax.X - cells_x
+    ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = ls.BoxDisplayMin.Y - cells_y, ls.BoxDisplayMax.Y - cells_y
+    ls.Draw()
+}
+
+func (ls *LifeSim) DragEnd() {
+    // Not much to do here
+}
+
+func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
+    // can't do much hear either
 }
 
 func (ls *LifeSim) Draw() {
@@ -507,6 +547,7 @@ func (controlBar *ControlBar) RunGame() {
 }
 
 func (controlBar *ControlBar) StepForward() {
+    controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
     controlBar.updateCadence = time.Since(controlBar.lastUpdateTime)
     controlBar.lastUpdateTime = time.Now()
     controlBar.clk.Tick()
@@ -529,11 +570,10 @@ func (controlBar *ControlBar) StepBackward() {
     controlBar.life.Draw()
 }
 
-/* The standard FileExtensionFilter only handles simple 
-   extensinos (e.g. ".rle") but not compound extensions
-   like ".rle.txt" that are sometimes the result of 
-   browsers saving RLE files
-*/
+// The standard FileExtensionFilter only handles simple 
+// extensinos (e.g. ".rle") but not compound extensions
+// like ".rle.txt" that are sometimes the result of 
+// browsers saving RLE files
 type LongExtensionsFileFilter struct {
     storage.FileFilter
     Extensions []string
