@@ -6,6 +6,7 @@ import (
     "image/color"
     "math"
     "os"
+    "path/filepath"
     "runtime"
     "strings"
     "sync"
@@ -624,6 +625,7 @@ func main() {
         } else {
             lifeSim.Game = newGame
             lifeSim.Game.SetHistorySize(historySize)
+            myWindow.SetTitle(filepath.Base(os.Args[1]))
         }
     } else {
         lifeSim.Game = golife.NewGame()
@@ -647,10 +649,12 @@ func main() {
             } else {
                 lifeSim.Game = newGame
                 lifeSim.Game.Filename = reader.URI().Name()
+                myWindow.SetTitle(reader.URI().Name())
                 lifeSim.Game.SetHistorySize(historySize)
                 lifeSim.ResizeToFit()
                 lifeSim.Draw()
             }
+            // Now we save where we opend this file so that we can default to it next time.
             parentURI, parErr := storage.Parent(reader.URI())
             if parErr != nil {
                 dialog.ShowError(parErr, myWindow)
