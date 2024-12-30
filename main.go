@@ -22,7 +22,6 @@ import (
     "fyne.io/fyne/v2/driver/desktop"
     "fyne.io/fyne/v2/layout"
     "fyne.io/fyne/v2/storage"
-    "fyne.io/fyne/v2/storage/repository"
     "fyne.io/fyne/v2/theme"
     "fyne.io/fyne/v2/widget"
     xlayout "fyne.io/x/fyne/layout"
@@ -634,15 +633,7 @@ func main() {
     lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt", ".cells", ".cells.txt"}}
     saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
 
-    cwd, err := os.Getwd()
-    if err != nil {
-        dialog.ShowError(err, myWindow)
-    }
-    tmpURI := repository.NewFileURI(cwd)
-    cwdURI, err := storage.ListerForURI(tmpURI)
-    if err != nil {
-        dialog.ShowError(err, myWindow)
-    }
+    var lastDirURI fyne.ListableURI
 
     fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
         if err != nil {
@@ -659,6 +650,17 @@ func main() {
                 lifeSim.Game.SetHistorySize(historySize)
                 lifeSim.ResizeToFit()
                 lifeSim.Draw()
+            }
+            parentURI, parErr := storage.Parent(reader.URI())
+            if parErr != nil {
+                dialog.ShowError(parErr, myWindow)
+            } else {
+                tmpURI, uriErr := storage.ListerForURI(parentURI)
+                if uriErr != nil {
+                    dialog.ShowError(uriErr, myWindow)
+                } else {
+                    lastDirURI = tmpURI
+                }
             }
         } 
     }
@@ -680,6 +682,17 @@ func main() {
             if write_err != nil {
                 dialog.ShowError(write_err, myWindow)
             }
+            parURI, parErr := storage.Parent(writer.URI())
+            if parErr != nil {
+                dialog.ShowError(parErr, myWindow)
+            } else {
+                tmpURI, uriErr := storage.ListerForURI(parURI)
+                if uriErr != nil {
+                    dialog.ShowError(uriErr, myWindow)
+                } else {
+                    lastDirURI = tmpURI
+                }
+            }
             writer.Close()
         }
     }
@@ -697,7 +710,7 @@ func main() {
         controlBar.StopSim()
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
         fileOpen.SetFilter(lifeFileExtensionsFilter)
-        fileOpen.SetLocation(cwdURI)
+        fileOpen.SetLocation(lastDirURI)
         fileOpen.Show()
     })
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
@@ -706,7 +719,7 @@ func main() {
         controlBar.StopSim()
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
         fileSave.SetFilter(saveLifeExtensionsFilter)
-        fileSave.SetLocation(cwdURI)
+        fileSave.SetLocation(lastDirURI)
         fileSave.Show()
     })
     fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
@@ -741,7 +754,7 @@ func main() {
         case fyne.KeyR:
             toggleRun(nil)
         default:
-            fmt.Println("Got unexpected key", keyEvent.Name)
+            // fmt.Println("Got unexpected key", keyEvent.Name)
         }
     }
     myWindow.Canvas().SetOnTypedKey(keyPressHandler)
