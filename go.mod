@@ -4,12 +4,12 @@ go 1.23.4
 
 require (
 	fyne.io/fyne/v2 v2.5.3
+	fyne.io/x/fyne v0.0.0-20241224222935-5be10b3dd763
 	github.com/pneumaticdeath/golife v0.0.6
 )
 
 require (
 	fyne.io/systray v1.11.0 // indirect
-	fyne.io/x/fyne v0.0.0-20241224222935-5be10b3dd763 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
