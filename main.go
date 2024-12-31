@@ -812,6 +812,12 @@ func main() {
 	})
 	newTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyN, Modifier: modKey}
 
+	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
+		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
+		tabs.Refresh()
+	})
+	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
+
 	fileOpenMenuItem := fyne.NewMenuItem("Open", func() {
 		currentLC.Control.StopSim()
 		fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
@@ -830,7 +836,8 @@ func main() {
 	})
 	fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
 
-	fileMenu := fyne.NewMenu("File", newTabMenuItem, fyne.NewMenuItemSeparator(), fileOpenMenuItem, fileSaveMenuItem)
+	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
+		fileOpenMenuItem, fileSaveMenuItem)
 	mainMenu := fyne.NewMainMenu(fileMenu)
 
 	myWindow.SetMainMenu(mainMenu)
