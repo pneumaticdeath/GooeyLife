@@ -34,10 +34,43 @@ const (
     historySize = 100
 )
 
-/*
- LifeSim - encapsulates everything about the simulation and displaying it on 
- a container
-*/
+type LifeContainer struct {
+    widget.BaseWidget
+
+    container   *fyne.Container
+
+    Sim         *LifeSim
+    Control     *ControlBar
+    Status      *StatusBar
+}
+
+func NewLifeContainer() *LifeContainer {
+    lc := &LifeContainer{}
+
+    lc.Sim = NewLifeSim()
+    lc.Control = NewControlBar(lc.Sim)
+    lc.Status  = NewStatusBar(lc.Sim, lc.Control)
+
+    lc.container = container.NewBorder(lc.Control, lc.Status, nil, nil, lc.Sim)
+
+    lc.ExtendBaseWidget(lc)
+    return lc
+}
+
+func (lc *LifeContainer) CreateRenderer() fyne.WidgetRenderer {
+    return widget.NewSimpleRenderer(lc.container)
+}
+
+func (lc *LifeContainer) SetGame(game *golife.Game) {
+    lc.Control.StopSim()
+    lc.Sim.Game = game
+    lc.Sim.Game.SetHistorySize(historySize)
+    lc.Sim.ResizeToFit()
+    lc.Sim.Draw()
+}
+
+// LifeSim - encapsulates everything about the simulation and displaying it on 
+// a canvas/container, but doesn't handle the animation, control or reporting
 
 type LifeSim struct {
     widget.BaseWidget
@@ -616,21 +649,17 @@ func main() {
     myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
     myWindow := myApp.NewWindow("Conway's Game of Life")
 
-    lifeSim := NewLifeSim()
+    lc := NewLifeContainer()
 
     if len(os.Args) > 1 {
         newGame, err := golife.Load(os.Args[1])
         if err != nil {
             dialog.ShowError(err, myWindow)
         } else {
-            lifeSim.Game = newGame
-            lifeSim.Game.SetHistorySize(historySize)
+            lc.SetGame(newGame)
             myWindow.SetTitle(filepath.Base(os.Args[1]))
         }
-    } else {
-        lifeSim.Game = golife.NewGame()
     }
-    lifeSim.ResizeToFit()
 
     lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt",".life",".life.txt", ".cells", ".cells.txt"}}
     saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle",".rle.txt"}}
@@ -647,12 +676,9 @@ func main() {
             if readErr != nil {
                 dialog.ShowError(readErr, myWindow)
             } else {
-                lifeSim.Game = newGame
-                lifeSim.Game.Filename = reader.URI().Path()
+                lc.SetGame (newGame)
+                lc.Sim.Game.Filename = reader.URI().Path()
                 myWindow.SetTitle(reader.URI().Name())
-                lifeSim.Game.SetHistorySize(historySize)
-                lifeSim.ResizeToFit()
-                lifeSim.Draw()
             }
             // Now we save where we opend this file so that we can default to it next time.
             parentURI, parErr := storage.Parent(reader.URI())
@@ -682,7 +708,7 @@ func main() {
             }
             */
         } else if writer != nil {
-            write_err := lifeSim.Game.WriteRLE(writer)
+            write_err := lc.Sim.Game.WriteRLE(writer)
             if write_err != nil {
                 dialog.ShowError(write_err, myWindow)
             }
@@ -708,10 +734,8 @@ func main() {
         modKey = fyne.KeyModifierControl
     }
 
-    controlBar := NewControlBar(lifeSim)
-
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
-        controlBar.StopSim()
+        lc.Control.StopSim()
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
         fileOpen.SetFilter(lifeFileExtensionsFilter)
         fileOpen.SetLocation(lastDirURI)
@@ -720,7 +744,7 @@ func main() {
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
-        controlBar.StopSim()
+        lc.Control.StopSim()
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
         fileSave.SetFilter(saveLifeExtensionsFilter)
         fileSave.SetLocation(lastDirURI)
@@ -733,28 +757,26 @@ func main() {
 
     myWindow.SetMainMenu(mainMenu)
 
-    statusBar := NewStatusBar(lifeSim, controlBar)
-    content := container.NewBorder(controlBar, statusBar, nil, nil, lifeSim)
-    myWindow.SetContent(content)
-    myWindow.Resize(fyne.NewSize(800, 500))
+    myWindow.SetContent(lc)
+    myWindow.Resize(fyne.NewSize(800, 600))
     toggleRun := func(shortcut fyne.Shortcut) {
-        if controlBar.IsRunning() {
-            controlBar.StopSim()
+        if lc.Control.IsRunning() {
+            lc.Control.StopSim()
         } else {
-            controlBar.StartSim()
+            lc.Control.StartSim()
         }
     }
     myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
     keyPressHandler := func(keyEvent *fyne.KeyEvent) {
         switch keyEvent.Name {
         case fyne.KeyUp:
-            lifeSim.ShiftUp()
+            lc.Sim.ShiftUp()
         case fyne.KeyDown:
-            lifeSim.ShiftDown()
+            lc.Sim.ShiftDown()
         case fyne.KeyLeft:
-            lifeSim.ShiftLeft()
+            lc.Sim.ShiftLeft()
         case fyne.KeyRight:
-            lifeSim.ShiftRight()
+            lc.Sim.ShiftRight()
         case fyne.KeyR:
             toggleRun(nil)
         default:
@@ -776,13 +798,10 @@ func main() {
             if err != nil {
                 dialog.ShowError(err, myWindow)
             } else if newGame != nil {
-                controlBar.StopSim()
-                lifeSim.Game = newGame
-                lifeSim.Game.SetHistorySize(historySize)
-                lifeSim.Game.Filename = files[0].Path()
+                lc.Control.StopSim()
+                lc.SetGame(newGame)
+                lc.Sim.Game.Filename = files[0].Path()
                 myWindow.SetTitle(files[0].Name())
-                lifeSim.ResizeToFit()
-                lifeSim.Draw()
             }
         }
     })
