@@ -763,6 +763,30 @@ func main() {
     }
     myWindow.Canvas().SetOnTypedKey(keyPressHandler)
 
+    myWindow.SetOnDropped(func (pos fyne.Position, files []fyne.URI) {
+        if len(files) >= 1 {
+            fmt.Println("Dropped file:", files[0])
+            gameParser := golife.FindReader(files[0].Name())
+            gameReader, err := storage.Reader(files[0])
+            if err != nil {
+                dialog.ShowError(err, myWindow)
+                return
+            }
+            newGame, err := gameParser(gameReader)
+            if err != nil {
+                dialog.ShowError(err, myWindow)
+            } else if newGame != nil {
+                controlBar.StopSim()
+                lifeSim.Game = newGame
+                lifeSim.Game.SetHistorySize(historySize)
+                lifeSim.Game.Filename = files[0].Path()
+                myWindow.SetTitle(files[0].Name())
+                lifeSim.ResizeToFit()
+                lifeSim.Draw()
+            }
+        }
+    })
+
     myWindow.ShowAndRun()
 }
 
