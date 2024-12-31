@@ -684,6 +684,7 @@ func (lt *LifeTabs) NewTab(lc *LifeContainer) {
         title = filepath.Base(lc.Sim.Game.Filename)
     }
     lt.DocTabs.Append(container.NewTabItem(title, lc))
+    lt.DocTabs.SelectIndex(len(lt.DocTabs.Items)-1)
 }
 
 func (lt *LifeTabs) SetCurrentGame(game *golife.Game) {
@@ -835,7 +836,6 @@ func main() {
     myWindow.SetMainMenu(mainMenu)
 
     myWindow.SetContent(tabs)
-    myWindow.Resize(fyne.NewSize(800, 600))
     toggleRun := func(shortcut fyne.Shortcut) {
         if currentLC.Control.IsRunning() {
             currentLC.Control.StopSim()
@@ -897,6 +897,7 @@ func main() {
         }
     })
 
+    myWindow.Resize(fyne.NewSize(800, 600))
     myWindow.ShowAndRun()
 }
 
