@@ -648,59 +648,52 @@ func (filter *LongExtensionsFileFilter) Matches(uri fyne.URI) bool {
 type LifeTabs struct {
     widget.BaseWidget
 
-    AppTabs             *container.AppTabs
-    LifeTabItems        []*LifeTabItem
-
+    DocTabs             *container.DocTabs
 }
 
-func NewLifeTabs(initLC *LifeContainer) *LifeTabs {
+func NewLifeTabs(lc *LifeContainer) *LifeTabs {
     lt := &LifeTabs{}
 
-    lt.LifeTabItems = make([]*LifeTabItem, 0, 3)
-    lt.LifeTabItems = append(lt.LifeTabItems, NewLifeTabItem(initLC))
-    lt.AppTabs = container.NewAppTabs(lt.LifeTabItems[0].TabItem)
+    title := "Blank Game"
+    if lc.Sim.Game.Filename != "" {
+        title = filepath.Base(lc.Sim.Game.Filename)
+    }
+    ti := container.NewTabItem(title, lc)
+    lt.DocTabs = container.NewDocTabs(ti)
 
     lt.ExtendBaseWidget(lt)
     return lt
 }
 
 func (lt *LifeTabs) CreateRenderer() fyne.WidgetRenderer {
-    return widget.NewSimpleRenderer(lt.AppTabs)
+    return widget.NewSimpleRenderer(lt.DocTabs)
 }
 
-func (lt *LifeTabs) CurrentLifeTabItem() *LifeTabItem {
-    return lt.LifeTabItems[lt.AppTabs.CurrentTabIndex()]
+func (lt *LifeTabs) CurrentLifeContainer() *LifeContainer {
+    co := lt.DocTabs.Selected().Content
+    lc, ok := co.(*LifeContainer)
+    if !ok {
+        fmt.Println("Unable to convert tab content to LifeContainer")
+    }
+    return lc
 }
 
 func (lt *LifeTabs) NewTab(lc *LifeContainer) {
-    lt.LifeTabItems = append(lt.LifeTabItems, NewLifeTabItem(lc))
-    lt.AppTabs.Append(lt.LifeTabItems[len(lt.LifeTabItems)-1].TabItem)
-}
-
-type LifeTabItem struct {
-    TabItem *container.TabItem
-    LifeContainer *LifeContainer
-}
-
-func NewLifeTabItem(lc *LifeContainer) *LifeTabItem {
-    lti := &LifeTabItem{}
     title := "Blank Game"
     if lc.Sim.Game.Filename != "" {
         title = filepath.Base(lc.Sim.Game.Filename)
     }
-    lti.TabItem = container.NewTabItem(title, lc)
-    lti.LifeContainer = lc
-
-    return lti
+    lt.DocTabs.Append(container.NewTabItem(title, lc))
 }
 
-func (lti *LifeTabItem) SetGame(game *golife.Game) {
+func (lt *LifeTabs) SetCurrentGame(game *golife.Game) {
+    lc := lt.CurrentLifeContainer()
+    lc.SetGame(game)
+    title := "Blank Game"
     if game.Filename != "" {
-        lti.TabItem.Text = filepath.Base(game.Filename)
-    } else {
-        lti.TabItem.Text = "<Blank Game>"
+        title = filepath.Base(game.Filename)
     }
-    lti.LifeContainer.SetGame(game)
+    lt.DocTabs.Selected().Text = title
 }
 
 func main() {
@@ -719,10 +712,10 @@ func main() {
     }
 
     tabs := NewLifeTabs(lc)
-    currentTabItem := tabs.CurrentLifeTabItem()
+    currentLC := tabs.CurrentLifeContainer()
 
-    tabs.AppTabs.OnSelected = func(ti *container.TabItem) {
-        currentTabItem = tabs.CurrentLifeTabItem()
+    tabs.DocTabs.OnSelected = func(ti *container.TabItem) {
+        currentLC = tabs.CurrentLifeContainer()
     }
 
     if len(os.Args) > 2 {
@@ -755,7 +748,7 @@ func main() {
                 dialog.ShowError(readErr, myWindow)
             } else {
                 newGame.Filename = reader.URI().Path()
-                currentTabItem.SetGame(newGame)
+                tabs.SetCurrentGame(newGame)
                 tabs.Refresh()
             }
             // Now we save where we opend this file so that we can default to it next time.
@@ -786,7 +779,7 @@ func main() {
             }
             */
         } else if writer != nil {
-            write_err := currentTabItem.LifeContainer.Sim.Game.WriteRLE(writer)
+            write_err := currentLC.Sim.Game.WriteRLE(writer)
             if write_err != nil {
                 dialog.ShowError(write_err, myWindow)
             }
@@ -819,7 +812,7 @@ func main() {
     newTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyN, Modifier: modKey}
 
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
-        currentTabItem.LifeContainer.Control.StopSim()
+        currentLC.Control.StopSim()
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
         fileOpen.SetFilter(lifeFileExtensionsFilter)
         fileOpen.SetLocation(lastDirURI)
@@ -828,7 +821,7 @@ func main() {
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
-        currentTabItem.LifeContainer.Control.StopSim()
+        currentLC.Control.StopSim()
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
         fileSave.SetFilter(saveLifeExtensionsFilter)
         fileSave.SetLocation(lastDirURI)
@@ -844,23 +837,23 @@ func main() {
     myWindow.SetContent(tabs)
     myWindow.Resize(fyne.NewSize(800, 600))
     toggleRun := func(shortcut fyne.Shortcut) {
-        if currentTabItem.LifeContainer.Control.IsRunning() {
-            currentTabItem.LifeContainer.Control.StopSim()
+        if currentLC.Control.IsRunning() {
+            currentLC.Control.StopSim()
         } else {
-            currentTabItem.LifeContainer.Control.StartSim()
+            currentLC.Control.StartSim()
         }
     }
     myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
     keyPressHandler := func(keyEvent *fyne.KeyEvent) {
         switch keyEvent.Name {
         case fyne.KeyUp:
-            currentTabItem.LifeContainer.Sim.ShiftUp()
+            currentLC.Sim.ShiftUp()
         case fyne.KeyDown:
-            currentTabItem.LifeContainer.Sim.ShiftDown()
+            currentLC.Sim.ShiftDown()
         case fyne.KeyLeft:
-            currentTabItem.LifeContainer.Sim.ShiftLeft()
+            currentLC.Sim.ShiftLeft()
         case fyne.KeyRight:
-            currentTabItem.LifeContainer.Sim.ShiftRight()
+            currentLC.Sim.ShiftRight()
         case fyne.KeyR:
             toggleRun(nil)
         default:
@@ -890,9 +883,9 @@ func main() {
             }
 
             remaining := games
-            if currentTabItem.TabItem.Text == "Blank Game" {
-                    currentTabItem.LifeContainer.Control.StopSim()
-                    currentTabItem.SetGame(games[0])
+            if tabs.DocTabs.Selected().Text == "Blank Game" {
+                    currentLC.Control.StopSim()
+                    tabs.SetCurrentGame(games[0])
                     remaining = games[1:]
             }
             for index := range remaining {
