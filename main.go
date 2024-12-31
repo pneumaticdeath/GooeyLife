@@ -34,14 +34,29 @@ const (
 	historySize = 50 // really should be configurable
 )
 
+// LifeContainer is the overall container managing a single
+// simulation.  There is one per tab currently.  This has
+// three major components.
+
 type LifeContainer struct {
 	widget.BaseWidget
 
 	container *fyne.Container
 
-	Sim     *LifeSim
+	// The Sim element contains the basic logic of
+	// the simulation, and encapsulates the logic
+	// from the golife.Game class and drawing
+	// the field of cells.
+	Sim *LifeSim
+
+	// The Control element manages all aspects of
+	// running and controlling the simulation: e.g.
+	// starting/stopping and controlling the speed
 	Control *ControlBar
-	Status  *StatusBar
+
+	// The Status object is responisble for providing
+	// the user with information about the simulation.
+	Status *StatusBar
 }
 
 func NewLifeContainer() *LifeContainer {
