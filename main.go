@@ -645,6 +645,64 @@ func (filter *LongExtensionsFileFilter) Matches(uri fyne.URI) bool {
     return false
 }
 
+type LifeTabs struct {
+    widget.BaseWidget
+
+    AppTabs             *container.AppTabs
+    LifeTabItems        []*LifeTabItem
+
+}
+
+func NewLifeTabs(initLC *LifeContainer) *LifeTabs {
+    lt := &LifeTabs{}
+
+    lt.LifeTabItems = make([]*LifeTabItem, 0, 3)
+    lt.LifeTabItems = append(lt.LifeTabItems, NewLifeTabItem(initLC))
+    lt.AppTabs = container.NewAppTabs(lt.LifeTabItems[0].TabItem)
+
+    lt.ExtendBaseWidget(lt)
+    return lt
+}
+
+func (lt *LifeTabs) CreateRenderer() fyne.WidgetRenderer {
+    return widget.NewSimpleRenderer(lt.AppTabs)
+}
+
+func (lt *LifeTabs) CurrentLifeTabItem() *LifeTabItem {
+    return lt.LifeTabItems[lt.AppTabs.CurrentTabIndex()]
+}
+
+func (lt *LifeTabs) NewTab(lc *LifeContainer) {
+    lt.LifeTabItems = append(lt.LifeTabItems, NewLifeTabItem(lc))
+    lt.AppTabs.Append(lt.LifeTabItems[len(lt.LifeTabItems)-1].TabItem)
+}
+
+type LifeTabItem struct {
+    TabItem *container.TabItem
+    LifeContainer *LifeContainer
+}
+
+func NewLifeTabItem(lc *LifeContainer) *LifeTabItem {
+    lti := &LifeTabItem{}
+    title := "Blank Game"
+    if lc.Sim.Game.Filename != "" {
+        title = filepath.Base(lc.Sim.Game.Filename)
+    }
+    lti.TabItem = container.NewTabItem(title, lc)
+    lti.LifeContainer = lc
+
+    return lti
+}
+
+func (lti *LifeTabItem) SetGame(game *golife.Game) {
+    if game.Filename != "" {
+        lti.TabItem.Text = filepath.Base(game.Filename)
+    } else {
+        lti.TabItem.Text = "<Blank Game>"
+    }
+    lti.LifeContainer.SetGame(game)
+}
+
 func main() {
     myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
     myWindow := myApp.NewWindow("Conway's Game of Life")
@@ -657,7 +715,27 @@ func main() {
             dialog.ShowError(err, myWindow)
         } else {
             lc.SetGame(newGame)
-            myWindow.SetTitle(filepath.Base(os.Args[1]))
+        }
+    }
+
+    tabs := NewLifeTabs(lc)
+    currentTabItem := tabs.CurrentLifeTabItem()
+
+    tabs.AppTabs.OnSelected = func(ti *container.TabItem) {
+        currentTabItem = tabs.CurrentLifeTabItem()
+    }
+
+    if len(os.Args) > 2 {
+        remaining := os.Args[2:]
+        for index := range remaining {
+            newGame, err := golife.Load(remaining[index])
+            if err != nil {
+                dialog.ShowError(err, myWindow)
+            } else {
+                nextlc := NewLifeContainer()
+                nextlc.SetGame(newGame)
+                tabs.NewTab(nextlc)
+            }
         }
     }
 
@@ -676,9 +754,9 @@ func main() {
             if readErr != nil {
                 dialog.ShowError(readErr, myWindow)
             } else {
-                lc.SetGame (newGame)
-                lc.Sim.Game.Filename = reader.URI().Path()
-                myWindow.SetTitle(reader.URI().Name())
+                newGame.Filename = reader.URI().Path()
+                currentTabItem.SetGame(newGame)
+                tabs.Refresh()
             }
             // Now we save where we opend this file so that we can default to it next time.
             parentURI, parErr := storage.Parent(reader.URI())
@@ -708,7 +786,7 @@ func main() {
             }
             */
         } else if writer != nil {
-            write_err := lc.Sim.Game.WriteRLE(writer)
+            write_err := currentTabItem.LifeContainer.Sim.Game.WriteRLE(writer)
             if write_err != nil {
                 dialog.ShowError(write_err, myWindow)
             }
@@ -734,8 +812,14 @@ func main() {
         modKey = fyne.KeyModifierControl
     }
 
+    newTabMenuItem := fyne.NewMenuItem("New Tab", func () {
+        newlc := NewLifeContainer()
+        tabs.NewTab(newlc)
+    })
+    newTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyN, Modifier: modKey}
+
     fileOpenMenuItem := fyne.NewMenuItem("Open", func () {
-        lc.Control.StopSim()
+        currentTabItem.LifeContainer.Control.StopSim()
         fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
         fileOpen.SetFilter(lifeFileExtensionsFilter)
         fileOpen.SetLocation(lastDirURI)
@@ -744,7 +828,7 @@ func main() {
     fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
 
     fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
-        lc.Control.StopSim()
+        currentTabItem.LifeContainer.Control.StopSim()
         fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
         fileSave.SetFilter(saveLifeExtensionsFilter)
         fileSave.SetLocation(lastDirURI)
@@ -752,31 +836,31 @@ func main() {
     })
     fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
 
-    fileMenu := fyne.NewMenu("File", fileOpenMenuItem, fileSaveMenuItem)
+    fileMenu := fyne.NewMenu("File", newTabMenuItem, fyne.NewMenuItemSeparator(), fileOpenMenuItem, fileSaveMenuItem)
     mainMenu := fyne.NewMainMenu(fileMenu)
 
     myWindow.SetMainMenu(mainMenu)
 
-    myWindow.SetContent(lc)
+    myWindow.SetContent(tabs)
     myWindow.Resize(fyne.NewSize(800, 600))
     toggleRun := func(shortcut fyne.Shortcut) {
-        if lc.Control.IsRunning() {
-            lc.Control.StopSim()
+        if currentTabItem.LifeContainer.Control.IsRunning() {
+            currentTabItem.LifeContainer.Control.StopSim()
         } else {
-            lc.Control.StartSim()
+            currentTabItem.LifeContainer.Control.StartSim()
         }
     }
     myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
     keyPressHandler := func(keyEvent *fyne.KeyEvent) {
         switch keyEvent.Name {
         case fyne.KeyUp:
-            lc.Sim.ShiftUp()
+            currentTabItem.LifeContainer.Sim.ShiftUp()
         case fyne.KeyDown:
-            lc.Sim.ShiftDown()
+            currentTabItem.LifeContainer.Sim.ShiftDown()
         case fyne.KeyLeft:
-            lc.Sim.ShiftLeft()
+            currentTabItem.LifeContainer.Sim.ShiftLeft()
         case fyne.KeyRight:
-            lc.Sim.ShiftRight()
+            currentTabItem.LifeContainer.Sim.ShiftRight()
         case fyne.KeyR:
             toggleRun(nil)
         default:
@@ -787,22 +871,36 @@ func main() {
 
     myWindow.SetOnDropped(func (pos fyne.Position, files []fyne.URI) {
         if len(files) >= 1 {
-            fmt.Println("Dropped file:", files[0])
-            gameParser := golife.FindReader(files[0].Name())
-            gameReader, err := storage.Reader(files[0])
-            if err != nil {
-                dialog.ShowError(err, myWindow)
-                return
+            fmt.Println("Dropped files:", files)
+            games := make([]*golife.Game, 0, len(files))
+            for index := range files {
+                gameParser := golife.FindReader(files[index].Name())
+                gameReader, err := storage.Reader(files[index])
+                if err != nil {
+                    dialog.ShowError(err, myWindow)
+                    return
+                }
+                newGame, err := gameParser(gameReader)
+                if err != nil {
+                    dialog.ShowError(err, myWindow)
+                } else if newGame != nil {
+                    newGame.Filename = files[index].Path()
+                    games = append(games, newGame)
+                }
             }
-            newGame, err := gameParser(gameReader)
-            if err != nil {
-                dialog.ShowError(err, myWindow)
-            } else if newGame != nil {
-                lc.Control.StopSim()
-                lc.SetGame(newGame)
-                lc.Sim.Game.Filename = files[0].Path()
-                myWindow.SetTitle(files[0].Name())
+
+            remaining := games
+            if currentTabItem.TabItem.Text == "Blank Game" {
+                    currentTabItem.LifeContainer.Control.StopSim()
+                    currentTabItem.SetGame(games[0])
+                    remaining = games[1:]
             }
+            for index := range remaining {
+                lc = NewLifeContainer()
+                lc.SetGame(remaining[index])
+                tabs.NewTab(lc)
+            }
+            tabs.Refresh()
         }
     })
 
