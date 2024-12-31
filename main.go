@@ -919,6 +919,10 @@ func main() {
 		}
 	})
 
+	// This is a workaround for a bug in Linux
+	// initial layout.
+	myWindow.Resize(fyne.NewSize(810, 610))
+	myWindow.Show()
 	myWindow.Resize(fyne.NewSize(800, 600))
-	myWindow.ShowAndRun()
+	myApp.Run()
 }
