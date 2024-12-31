@@ -648,7 +648,7 @@ func main() {
                 dialog.ShowError(readErr, myWindow)
             } else {
                 lifeSim.Game = newGame
-                lifeSim.Game.Filename = reader.URI().Name()
+                lifeSim.Game.Filename = reader.URI().Path()
                 myWindow.SetTitle(reader.URI().Name())
                 lifeSim.Game.SetHistorySize(historySize)
                 lifeSim.ResizeToFit()
