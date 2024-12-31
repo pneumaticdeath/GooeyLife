@@ -31,7 +31,7 @@ import (
 const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
-	historySize = 100
+	historySize = 50 // really should be configurable
 )
 
 type LifeContainer struct {
