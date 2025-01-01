@@ -13,8 +13,7 @@ import (
 	"time"
 
 	"github.com/pneumaticdeath/golife"
-
-	"github.com/pneumaticdeath/guiLife/examples"
+	"github.com/pneumaticdeath/golife/examples"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
