@@ -835,6 +835,9 @@ func main() {
 
 	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
+		if len(tabs.DocTabs.Items) == 0 {
+			myApp.Quit()
+		}
 		tabs.Refresh()
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
