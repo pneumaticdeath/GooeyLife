@@ -734,6 +734,12 @@ func main() {
 		currentLC = tabs.CurrentLifeContainer()
 	}
 
+	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
+		if len(tabs.DocTabs.Items) == 0 {
+			myApp.Quit()
+		}
+	}
+
 	if len(os.Args) > 2 {
 		remaining := os.Args[2:]
 		for index := range remaining {
@@ -829,9 +835,6 @@ func main() {
 
 	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
-		if len(tabs.DocTabs.Items) == 0 {
-			myApp.Quit()
-		}
 		tabs.Refresh()
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
