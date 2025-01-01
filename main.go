@@ -14,6 +14,8 @@ import (
 
 	"github.com/pneumaticdeath/golife"
 
+	"github.com/pneumaticdeath/guiLife/examples"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
@@ -712,6 +714,17 @@ func (lt *LifeTabs) SetCurrentGame(game *golife.Game) {
 	lt.DocTabs.Selected().Text = title
 }
 
+func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuItem {
+	items := make([]*fyne.MenuItem, 0, len(examples.Examples))
+
+	for index := range examples.Examples {
+		e := examples.Examples[index]
+		items = append(items, fyne.NewMenuItem(e.Title, loader(e)))
+	}
+
+	return items
+}
+
 func main() {
 	myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
 	myWindow := myApp.NewWindow("Conway's Game of Life")
@@ -862,7 +875,17 @@ func main() {
 
 	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
 		fileOpenMenuItem, fileSaveMenuItem)
-	mainMenu := fyne.NewMainMenu(fileMenu)
+
+	exampleLoader := func(e examples.Example) func() {
+		return func() {
+			newGame := examples.LoadExample(e)
+			tabs.SetCurrentGame(newGame)
+			tabs.Refresh()
+		}
+	}
+	examplesMenu := fyne.NewMenu("Examples", BuildExampleMenuItems(exampleLoader)...)
+
+	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu)
 
 	myWindow.SetMainMenu(mainMenu)
 
@@ -895,14 +918,13 @@ func main() {
 
 	myWindow.SetOnDropped(func(pos fyne.Position, files []fyne.URI) {
 		if len(files) >= 1 {
-			fmt.Println("Dropped files:", files)
 			games := make([]*golife.Game, 0, len(files))
 			for index := range files {
 				gameParser := golife.FindReader(files[index].Name())
 				gameReader, err := storage.Reader(files[index])
 				if err != nil {
 					dialog.ShowError(err, myWindow)
-					return
+					continue
 				}
 				newGame, err := gameParser(gameReader)
 				if err != nil {
@@ -930,7 +952,7 @@ func main() {
 
 	// This is a workaround for a bug in Linux
 	// initial layout.
-	myWindow.Resize(fyne.NewSize(1028, 780))
+	myWindow.Resize(fyne.NewSize(1028, 770))
 	myWindow.Show()
 	myWindow.Resize(fyne.NewSize(1024, 768))
 	myApp.Run()
