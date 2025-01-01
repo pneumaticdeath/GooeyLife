@@ -882,13 +882,33 @@ func main() {
 			tabs.Refresh()
 		}
 	}
+	allExamplesMI := fyne.NewMenuItem("Open all examples", func() {
+		games := make([]*golife.Game, 0, len(examples.Examples))
+		for index := range examples.Examples {
+			games = append(games, examples.LoadExample(examples.Examples[index]))
+		}
+		remaining := games
+		if len(currentLC.Sim.Game.Population) == 0 {
+			tabs.SetCurrentGame(games[0])
+			remaining = games[1:]
+		}
+		for gameIndex := range remaining {
+			lc = NewLifeContainer()
+			lc.SetGame(remaining[gameIndex])
+			tabs.NewTab(lc)
+		}
+		tabs.Refresh()
+	})
+
 	examplesMenu := fyne.NewMenu("Examples", BuildExampleMenuItems(exampleLoader)...)
+	examplesMenu.Items = append(examplesMenu.Items, fyne.NewMenuItemSeparator(), allExamplesMI)
 
 	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu)
 
 	myWindow.SetMainMenu(mainMenu)
 
 	myWindow.SetContent(tabs)
+
 	toggleRun := func(shortcut fyne.Shortcut) {
 		if currentLC.Control.IsRunning() {
 			currentLC.Control.StopSim()
@@ -896,6 +916,7 @@ func main() {
 			currentLC.Control.StartSim()
 		}
 	}
+
 	myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
 	keyPressHandler := func(keyEvent *fyne.KeyEvent) {
 		switch keyEvent.Name {
@@ -935,7 +956,7 @@ func main() {
 			}
 
 			remaining := games
-			if tabs.DocTabs.Selected().Text == "Blank Game" {
+			if len(currentLC.Sim.Game.Population) == 0 {
 				currentLC.Control.StopSim()
 				tabs.SetCurrentGame(games[0])
 				remaining = games[1:]
