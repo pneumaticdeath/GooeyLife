@@ -7,7 +7,9 @@
 *.dll
 *.so
 *.dylib
+*.zip
 guiLife
+guiLife.app
 .DS_Store
 
 # Test binary, built with `go test -c`
