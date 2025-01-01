@@ -1,6 +1,6 @@
 # guiLife
 
-Copyright 2024 Mitch Patenaude
+Copyright 2024, 2025 Mitch Patenaude
 
 This is a golang implementation of a GUI frontend to the
 [golife](https://github.com/pneumaticdeath/golife) Game of Life engine
