@@ -103,6 +103,7 @@ type LifeSim struct {
 	LastDrawTime                 time.Duration   // How long it to draw the last frame
 	drawingSurface               *fyne.Container // The actual drawing surface
 	CellColor                    color.Color     // Color the cells should be draw in
+	useAlphaDensity              bool            // whether to use alpha to adjust color for aggregate pixels
 	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
 	BackgroundColor              color.Color     // Should probably be derived from the theme
 	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
@@ -121,6 +122,7 @@ func NewLifeSim() *LifeSim {
 	sim.BoxDisplayMax = golife.Cell{10, 10}
 	sim.drawingSurface = container.NewWithoutLayout()
 	sim.CellColor = pausedCellColor
+	sim.useAlphaDensity = false
 	sim.GlyphStyle = "RoundedRectangle"
 	sim.BackgroundColor = color.Black
 	sim.autoZoom = binding.NewBool()
@@ -292,12 +294,17 @@ func (ls *LifeSim) Draw() {
 
 	if ls.Scale < 2.0 && len(pixels) > 0 {
 		for pixelPos, count := range pixels {
-			density := max(float32(count)/float32(maxDens), float32(0.25))
-			r, g, b, a := ls.CellColor.RGBA()
-			pixelColor := color.NRGBA{R: uint8(r),
-				G: uint8(g),
-				B: uint8(b),
-				A: uint8(float32(a) * density)}
+			var pixelColor color.Color
+			if ls.useAlphaDensity {
+				density := max(float32(count)/float32(maxDens), float32(0.25))
+				r, g, b, a := ls.CellColor.RGBA()
+				pixelColor = color.NRGBA{R: uint8(r),
+					G: uint8(g),
+					B: uint8(b),
+					A: uint8(float32(a) * density)}
+			} else {
+				pixelColor = ls.CellColor
+			}
 			pixel := canvas.NewRectangle(pixelColor)
 			pixel.Resize(fyne.NewSize(2, 2))
 			pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
