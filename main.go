@@ -35,6 +35,11 @@ const (
 	historySize = 50 // really should be configurable
 )
 
+var (
+	pausedCellColor  color.Color = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
+	runningCellColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
+)
+
 // LifeContainer is the overall container managing a single
 // simulation.  There is one per tab currently.  This has
 // three major components.
@@ -104,7 +109,6 @@ type LifeSim struct {
 	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
 }
 
-// For widget.Basewidget compatibility
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(ls.drawingSurface)
 }
@@ -116,10 +120,9 @@ func NewLifeSim() *LifeSim {
 	sim.BoxDisplayMin = golife.Cell{0, 0}
 	sim.BoxDisplayMax = golife.Cell{10, 10}
 	sim.drawingSurface = container.NewWithoutLayout()
-	sim.CellColor = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
+	sim.CellColor = pausedCellColor
 	sim.GlyphStyle = "RoundedRectangle"
 	sim.BackgroundColor = color.Black
-	// sim.BackgroundColor = color.White
 	sim.autoZoom = binding.NewBool()
 	sim.autoZoom.Set(true)
 	sim.autoZoom.AddListener(binding.NewDataListener(func() { sim.Draw() }))
@@ -636,16 +639,12 @@ func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (controlBar *ControlBar) RunGame() {
-	// red := color.NRGBA{R: 255, G: 0, B: 0, A: 255}
-	blue := color.NRGBA{R: 0, G: 0, B: 255, A: 255}
-	green := color.NRGBA{R: 0, G: 255, B: 0, A: 255}
-
-	controlBar.life.CellColor = green
+	controlBar.life.CellColor = runningCellColor
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
-	controlBar.life.CellColor = blue
+	controlBar.life.CellColor = pausedCellColor
 	controlBar.life.Draw()
 }
 
