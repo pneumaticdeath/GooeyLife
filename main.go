@@ -184,6 +184,36 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 	// can't do much hear either
 }
 
+func (ls *LifeSim) GetGameInfo() (string, string) {
+	var title string = "Blank Game"
+	if ls.Game.Filename != "" {
+		title = ls.Game.Filename
+	}
+	var content strings.Builder
+	for _, comment := range ls.Game.Comments {
+		if strings.HasPrefix(comment, "#") {
+			comment = comment[1:]
+		}
+		switch {
+		case strings.HasPrefix(comment, "N "):
+			content.WriteString("Name: ")
+			content.WriteString(comment[2:])
+		case strings.HasPrefix(comment, "O "):
+			content.WriteString("Author: ")
+			content.WriteString(comment[2:])
+		case strings.HasPrefix(comment, "C "):
+			content.WriteString(comment[2:])
+		case strings.HasPrefix(comment, " "):
+			content.WriteString(comment[1:])
+		default:
+			content.WriteString(comment)
+		}
+		content.WriteString("\n")
+	}
+
+	return title, content.String()
+}
+
 func (ls *LifeSim) Draw() {
 	ls.AutoZoom()
 
@@ -872,8 +902,14 @@ func main() {
 	})
 	fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
 
+	fileInfoMenuItem := fyne.NewMenuItem("Get info", func() {
+		title, content := currentLC.Sim.GetGameInfo()
+		dialog.ShowInformation(title, content, myWindow)
+	})
+	fileInfoMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyI, Modifier: modKey}
+
 	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
-		fileOpenMenuItem, fileSaveMenuItem)
+		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem)
 
 	exampleLoader := func(e examples.Example) func() {
 		return func() {
