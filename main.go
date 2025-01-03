@@ -38,6 +38,7 @@ const (
 var (
 	pausedCellColor  color.Color = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
 	runningCellColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
+	editingCellColor color.Color = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
 )
 
 // LifeContainer is the overall container managing a single
@@ -107,6 +108,7 @@ type LifeSim struct {
 	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
 	BackgroundColor              color.Color     // Should probably be derived from the theme
 	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
+	EditMode                     binding.Bool    // Whether the sim is in editable mode
 	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
 }
 
@@ -128,6 +130,8 @@ func NewLifeSim() *LifeSim {
 	sim.autoZoom = binding.NewBool()
 	sim.autoZoom.Set(true)
 	sim.autoZoom.AddListener(binding.NewDataListener(func() { sim.Draw() }))
+	sim.EditMode = binding.NewBool()
+	sim.EditMode.Set(false)
 	sim.ExtendBaseWidget(sim)
 	return sim
 }
@@ -143,6 +147,11 @@ func (ls *LifeSim) SetAutoZoom(az bool) {
 func (ls *LifeSim) IsAutoZoom() bool {
 	az, _ := ls.autoZoom.Get()
 	return az
+}
+
+func (ls *LifeSim) IsEditable() bool {
+	em, _ := ls.EditMode.Get()
+	return em
 }
 
 func (ls *LifeSim) Resize(size fyne.Size) {
@@ -169,7 +178,28 @@ func (ls *LifeSim) DragEnd() {
 }
 
 func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
-	// can't do much hear either
+	if ls.IsEditable() {
+		// Slightly non-obvious, but the upper left
+		// corner of the dislay box is not  necessarily
+		// aligned at the uppper left corner, but the
+		// center of the display box is always the same
+		// as the center of the window
+		windowSize := ls.drawingSurface.Size()
+		windowCenter_x := windowSize.Width / 2.0
+		windowCenter_y := windowSize.Height / 2.0
+		boxCenter_x := (ls.BoxDisplayMax.X + ls.BoxDisplayMin.X) / 2.0
+		boxCenter_y := (ls.BoxDisplayMax.Y + ls.BoxDisplayMin.Y) / 2.0
+		x, y := e.Position.Components()
+		cell_x := golife.Coord(math.Floor(float64((x-windowCenter_x)/ls.Scale + boxCenter_x + 0.5)))
+		cell_y := golife.Coord(math.Floor(float64((y-windowCenter_y)/ls.Scale + boxCenter_y + 0.5)))
+		cell := golife.Cell{cell_x, cell_y}
+		if ls.Game.Population[cell] {
+			delete(ls.Game.Population, cell)
+		} else {
+			ls.Game.Population[cell] = true
+		}
+		ls.Draw()
+	}
 }
 
 func (ls *LifeSim) GetGameInfo() (string, string) {
@@ -503,6 +533,7 @@ type ControlBar struct {
 	zoomFitButton      *widget.Button
 	zoomInButton       *widget.Button
 	glyphSelector      *widget.Select
+	editCheckBox       *widget.Check
 	speedSlider        *widget.Slider
 	bar                *fyne.Container
 	running            bool
@@ -548,7 +579,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 	controlBar.autoZoomCheckBox = widget.NewCheckWithData("Auto Zoom", controlBar.life.autoZoom)
 
-	controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
+	// controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
 	controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() { controlBar.life.ResizeToFit(); controlBar.life.Draw() })
 
@@ -556,6 +587,18 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 	controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle", "RoundedRectangle", "Circle"}, func(selection string) { controlBar.life.GlyphStyle = selection; controlBar.life.Draw() })
 	controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
+
+	controlBar.editCheckBox = widget.NewCheckWithData("Edit mode", controlBar.life.EditMode)
+	controlBar.life.EditMode.AddListener(binding.NewDataListener(func() {
+		if controlBar.life.IsEditable() {
+			controlBar.StopSim()
+			controlBar.life.CellColor = editingCellColor
+			controlBar.life.Draw()
+		} else {
+			controlBar.life.CellColor = pausedCellColor
+			controlBar.life.Draw()
+		}
+	}))
 
 	controlBar.speedSlider = widget.NewSlider(0.5, 3.0) // log_10 scale in milliseconds
 	controlBar.speedSlider.SetValue(2.0)                // default to 100ms clock tick time
@@ -565,7 +608,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	controlBar.bar = container.New(layout.NewGridLayout(2),
 		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
 			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.autoZoomCheckBox,
-			controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector),
+			controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector, controlBar.editCheckBox),
 		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
 	controlBar.ExtendBaseWidget(controlBar)
@@ -584,6 +627,9 @@ func (controlBar *ControlBar) StartSim() {
 		controlBar.setRunStopText("Pause", theme.MediaPauseIcon())
 		controlBar.running = true
 		go controlBar.RunGame()
+	}
+	if controlBar.life.IsEditable() {
+		controlBar.life.EditMode.Set(false)
 	}
 }
 
@@ -619,7 +665,11 @@ func (controlBar *ControlBar) RunGame() {
 		controlBar.StepForward()
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
-	controlBar.life.CellColor = pausedCellColor
+	if controlBar.life.IsEditable() {
+		controlBar.life.CellColor = editingCellColor
+	} else {
+		controlBar.life.CellColor = pausedCellColor
+	}
 	controlBar.life.Draw()
 }
 
