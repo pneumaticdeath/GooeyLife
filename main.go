@@ -72,7 +72,7 @@ func NewLifeContainer() *LifeContainer {
 	lc.Control = NewControlBar(lc.Sim)
 	lc.Status = NewStatusBar(lc.Sim, lc.Control)
 
-	lc.container = container.NewBorder(lc.Control, lc.Status, nil, nil, lc.Sim)
+	lc.container = container.NewBorder(lc.Control, lc.Status, nil, nil, container.NewScroll(lc.Sim))
 
 	lc.ExtendBaseWidget(lc)
 	return lc
