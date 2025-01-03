@@ -97,7 +97,7 @@ type LifeSim struct {
 	widget.BaseWidget
 
 	Game                         *golife.Game    // The underlying GameOfLife engine
-	BoxDisplayMin, BoxDisplayMax golife.Cell     // The viewport into the game
+	BoxDisplayMin, BoxDisplayMax fyne.Position   // The viewport into the game in the coordinates of the sim
 	Scale                        float32         // points per cell
 	LastStepTime                 time.Duration   // Statistic of time taken to calculate the last generation
 	LastDrawTime                 time.Duration   // How long it to draw the last frame
@@ -118,8 +118,8 @@ func NewLifeSim() *LifeSim {
 	sim := &LifeSim{}
 	sim.Game = golife.NewGame()
 	sim.Game.SetHistorySize(historySize)
-	sim.BoxDisplayMin = golife.Cell{0, 0}
-	sim.BoxDisplayMax = golife.Cell{10, 10}
+	sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
+	sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
 	sim.drawingSurface = container.NewWithoutLayout()
 	sim.CellColor = pausedCellColor
 	sim.useAlphaDensity = false
@@ -156,25 +156,8 @@ func (ls *LifeSim) Dragged(e *fyne.DragEvent) {
 	}
 	ls.SetAutoZoom(false)
 	dx, dy := e.Dragged.Components()
-	rel_cells_x := dx / ls.Scale
-	rel_cells_y := dy / ls.Scale
-	var cells_x, cells_y golife.Coord
-	switch {
-	case rel_cells_x > -0.1 && rel_cells_x < 0.1:
-		cells_x = golife.Coord(0)
-	case rel_cells_x < 0:
-		cells_x = golife.Coord(math.Floor(float64(rel_cells_x)))
-	default:
-		cells_x = golife.Coord(math.Ceil(float64(rel_cells_x)))
-	}
-	switch {
-	case rel_cells_y > -0.1 && rel_cells_y < 0.1:
-		cells_y = golife.Coord(0)
-	case rel_cells_y < 0:
-		cells_y = golife.Coord(math.Floor(float64(rel_cells_y)))
-	default:
-		cells_y = golife.Coord(math.Ceil(float64(rel_cells_y)))
-	}
+	cells_x := dx / ls.Scale
+	cells_y := dy / ls.Scale
 
 	ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = ls.BoxDisplayMin.X-cells_x, ls.BoxDisplayMax.X-cells_x
 	ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = ls.BoxDisplayMin.Y-cells_y, ls.BoxDisplayMax.Y-cells_y
@@ -235,20 +218,17 @@ func (ls *LifeSim) Draw() {
 
 	population := ls.Game.Population // saving the current population in case the underlying population changes during draw
 
-	displayWidth := float32(ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + 1)
-	displayHeight := float32(ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + 1)
+	displayWidth := ls.BoxDisplayMax.X - ls.BoxDisplayMin.X + float32(1.0)
+	displayHeight := ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y + float32(1.0)
 
 	ls.Scale = min(windowSize.Width/displayWidth, windowSize.Height/displayHeight)
 
 	cellSize := fyne.NewSize(ls.Scale, ls.Scale)
 
-	displayCenter := fyne.NewPos(float32(ls.BoxDisplayMax.X+ls.BoxDisplayMin.X)/2.0,
-		float32(ls.BoxDisplayMax.Y+ls.BoxDisplayMin.Y)/2.0)
+	displayCenter := fyne.NewPos((ls.BoxDisplayMax.X+ls.BoxDisplayMin.X)/2.0,
+		(ls.BoxDisplayMax.Y+ls.BoxDisplayMin.Y)/2.0)
 
 	windowCenter := fyne.NewPos(windowSize.Width/2.0, windowSize.Height/2.0)
-
-	pixels := make(map[golife.Cell]int32)
-	maxDens := 1
 
 	background := canvas.NewRectangle(ls.BackgroundColor)
 	background.Resize(windowSize)
@@ -258,12 +238,15 @@ func (ls *LifeSim) Draw() {
 
 	newObjects = append(newObjects, background)
 
+	pixels := make(map[golife.Cell]int32)
+	maxDens := 1
+
 	for cell, _ := range population {
 		window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
 		window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
 		cellPos := fyne.NewPos(window_x, window_y)
 
-		if window_x >= -0.5 && window_y >= -0.5 && window_x < windowSize.Width-ls.Scale/2.0 && window_y < windowSize.Height-ls.Scale/2.0 {
+		if window_x >= -ls.Scale && window_y >= -ls.Scale && window_x < windowSize.Width+ls.Scale && window_y < windowSize.Height+ls.Scale {
 			if ls.Scale < 2.0 {
 				pixelPos := golife.Cell{golife.Coord(window_x), golife.Coord(window_y)}
 				pixels[pixelPos] += 1
@@ -323,10 +306,10 @@ func (ls *LifeSim) Draw() {
 	ls.LastDrawTime = time.Since(start)
 }
 
-func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner golife.Cell) {
+func (ls *LifeSim) SetDisplayBox(minCorner, maxCorner fyne.Position) {
 	if minCorner.X > maxCorner.X {
-		ls.BoxDisplayMin = golife.Cell{0, 0}
-		ls.BoxDisplayMax = golife.Cell{10, 10}
+		ls.BoxDisplayMin = fyne.NewPos(0, 0)
+		ls.BoxDisplayMax = fyne.NewPos(10, 10)
 	} else {
 		ls.BoxDisplayMin, ls.BoxDisplayMax = minCorner, maxCorner
 	}
@@ -337,26 +320,10 @@ func (ls *LifeSim) Zoom(factor float32) {
 	ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = scale(ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y, factor)
 }
 
-func scale(min_v, max_v golife.Coord, factor float32) (golife.Coord, golife.Coord) {
-	mid_v := float32(max_v+min_v) / 2.0
-	new_min := golife.Coord(mid_v - (mid_v-float32(min_v))*factor)
-	new_max := golife.Coord(mid_v + (float32(max_v)-mid_v)*factor)
-
-	if new_min == min_v {
-		if factor < 1.0 {
-			new_min += 1
-		} else if factor > 1.0 {
-			new_min -= 1
-		}
-	}
-
-	if new_max == max_v {
-		if factor < 1.0 {
-			new_max -= 1
-		} else if factor > 1.0 {
-			new_max += 1
-		}
-	}
+func scale(min_v, max_v float32, factor float32) (float32, float32) {
+	mid_v := (max_v + min_v) / 2.0
+	new_min := (mid_v - (mid_v-min_v)*factor)
+	new_max := (mid_v + (max_v-mid_v)*factor)
 
 	if new_max > new_min {
 		return new_min, new_max
@@ -365,13 +332,13 @@ func scale(min_v, max_v golife.Coord, factor float32) (golife.Coord, golife.Coor
 	}
 }
 
-func shift(min_v, max_v golife.Coord, factor float64) (golife.Coord, golife.Coord) {
-	amount := golife.Coord(math.Floor(float64(max_v-min_v)*factor + 0.5))
+func shift(min_v, max_v, factor float32) (float32, float32) {
+	amount := (max_v - min_v) * factor
 	if amount == 0 {
 		if factor < 0.0 {
-			amount = golife.Coord(-1)
+			amount = -0.5
 		} else if factor > 0.0 {
-			amount = golife.Coord(1)
+			amount = 0.5
 		}
 	}
 
@@ -379,7 +346,7 @@ func shift(min_v, max_v golife.Coord, factor float64) (golife.Coord, golife.Coor
 }
 
 func (ls *LifeSim) ShiftLeft() {
-	ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = shift(ls.BoxDisplayMin.X, ls.BoxDisplayMax.X, -1*shiftFactor)
+	ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = shift(ls.BoxDisplayMin.X, ls.BoxDisplayMax.X, -1.0*shiftFactor)
 	ls.Draw()
 }
 
@@ -403,28 +370,29 @@ func (ls *LifeSim) AutoZoom() {
 		return
 	}
 
-	gameBoxMin, gameBoxMax := ls.Game.Population.BoundingBox()
+	gameCoordMin, gameCoordMax := ls.Game.Population.BoundingBox()
 
-	if gameBoxMin.X < ls.BoxDisplayMin.X {
-		ls.BoxDisplayMin.X = gameBoxMin.X
+	if float32(gameCoordMin.X) < ls.BoxDisplayMin.X {
+		ls.BoxDisplayMin.X = float32(gameCoordMin.X)
 	}
 
-	if gameBoxMin.Y < ls.BoxDisplayMin.Y {
-		ls.BoxDisplayMin.Y = gameBoxMin.Y
+	if float32(gameCoordMin.Y) < ls.BoxDisplayMin.Y {
+		ls.BoxDisplayMin.Y = float32(gameCoordMin.Y)
 	}
 
-	if gameBoxMax.X > ls.BoxDisplayMax.X {
-		ls.BoxDisplayMax.X = gameBoxMax.X
+	if float32(gameCoordMax.X) > ls.BoxDisplayMax.X {
+		ls.BoxDisplayMax.X = float32(gameCoordMax.X)
 	}
 
-	if gameBoxMax.Y > ls.BoxDisplayMax.Y {
-		ls.BoxDisplayMax.Y = gameBoxMax.Y
+	if float32(gameCoordMax.Y) > ls.BoxDisplayMax.Y {
+		ls.BoxDisplayMax.Y = float32(gameCoordMax.Y)
 	}
 }
 
 func (ls *LifeSim) ResizeToFit() {
-	boxDisplayMin, boxDisplayMax := ls.Game.Population.BoundingBox()
-	ls.SetDisplayBox(boxDisplayMin, boxDisplayMax)
+	boxMin, boxMax := ls.Game.Population.BoundingBox()
+	newMin, newMax := fyne.NewPos(float32(boxMin.X), float32(boxMin.Y)), fyne.NewPos(float32(boxMax.X), float32(boxMax.Y))
+	ls.SetDisplayBox(newMin, newMax)
 }
 
 type StatusBar struct {
