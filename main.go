@@ -718,11 +718,11 @@ func (lt *LifeTabs) SetCurrentGame(game *golife.Game) {
 }
 
 func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuItem {
-	items := make([]*fyne.MenuItem, 0, len(examples.Examples))
+	exList := examples.ListExamples()
+	items := make([]*fyne.MenuItem, 0, len(exList))
 
-	for index := range examples.Examples {
-		e := examples.Examples[index]
-		items = append(items, fyne.NewMenuItem(e.Title, loader(e)))
+	for _, ex := range exList {
+		items = append(items, fyne.NewMenuItem(ex.Title, loader(ex)))
 	}
 
 	return items
@@ -893,9 +893,10 @@ func main() {
 		}
 	}
 	allExamplesMI := fyne.NewMenuItem("Open all examples", func() {
-		games := make([]*golife.Game, 0, len(examples.Examples))
-		for index := range examples.Examples {
-			games = append(games, examples.LoadExample(examples.Examples[index]))
+		exList := examples.ListExamples()
+		games := make([]*golife.Game, 0, len(exList))
+		for _, ex := range exList {
+			games = append(games, examples.LoadExample(ex))
 		}
 		remaining := games
 		if len(currentLC.Sim.Game.Population) == 0 {
