@@ -276,7 +276,7 @@ func (ls *LifeSim) Draw() {
 	pixels := make(map[golife.Cell]int32)
 	maxDens := 1
 
-	for cell, _ := range population {
+	for cell := range population {
 		window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
 		window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
 		cellPos := fyne.NewPos(window_x, window_y)
