@@ -200,10 +200,10 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 		cell_x := golife.Coord(math.Floor(float64((x-windowCenter_x)/ls.Scale + boxCenter_x + 0.5)))
 		cell_y := golife.Coord(math.Floor(float64((y-windowCenter_y)/ls.Scale + boxCenter_y + 0.5)))
 		cell := golife.Cell{cell_x, cell_y}
-		if ls.Game.Population[cell] {
-			delete(ls.Game.Population, cell)
+		if ls.Game.HasCell(cell) {
+			ls.Game.RemoveCell(cell)
 		} else {
-			ls.Game.Population[cell] = true
+			ls.Game.AddCell(cell)
 		}
 		ls.Draw()
 	}
