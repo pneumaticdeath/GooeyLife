@@ -917,8 +917,8 @@ func main() {
 		if len(tabs.DocTabs.Items) == 0 {
 			myApp.Quit()
 		} else {
-		    tabs.Refresh()
-		    currentLC = tabs.CurrentLifeContainer()
+			tabs.Refresh()
+			currentLC = tabs.CurrentLifeContainer()
 		}
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
