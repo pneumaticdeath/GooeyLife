@@ -34,7 +34,7 @@ import (
 const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
-	historySize = 0 // really should be configurable
+	historySize = 10 // really should be configurable
 )
 
 var (
