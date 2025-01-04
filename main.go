@@ -947,7 +947,7 @@ func main() {
 	})
 	fileInfoMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyI, Modifier: modKey}
 
-	fileAboutMenuItem := fyne.NewMenuItem("About GuiLife", func() {
+	fileAboutMenuItem := fyne.NewMenuItem("About", func() {
 		aboutContent := container.New(layout.NewVBoxLayout(), GuiLifeIconImage,
 			widget.NewLabel("GuiLife"), widget.NewLabel("Copyright 2024,2025"),
 			widget.NewLabel(""), widget.NewLabel("written by Mitch Patenaude"))
