@@ -784,7 +784,7 @@ func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuIte
 }
 
 func main() {
-	myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
+	myApp := app.NewWithID("io.patenaude.guiLife")
 	myWindow := myApp.NewWindow("Conway's Game of Life")
 
 	pngReader := bytes.NewReader(iconPNGData)
