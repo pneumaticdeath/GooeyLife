@@ -813,8 +813,10 @@ func main() {
 	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
 		if len(tabs.DocTabs.Items) == 0 {
 			myApp.Quit()
+		} else {
+			tabs.Refresh()
+			currentLC = tabs.CurrentLifeContainer()
 		}
-		currentLC = tabs.CurrentLifeContainer()
 	}
 
 	if len(os.Args) > 2 {
