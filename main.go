@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"image/color"
@@ -40,6 +42,9 @@ var (
 	runningCellColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
 	editingCellColor color.Color = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
 )
+
+//go:embed Icon.png
+var iconPNGData []byte
 
 // LifeContainer is the overall container managing a single
 // simulation.  There is one per tab currently.  This has
@@ -782,6 +787,11 @@ func main() {
 	myApp := app.NewWithID("com.github.pneumaticdeath.guiLife")
 	myWindow := myApp.NewWindow("Conway's Game of Life")
 
+	pngReader := bytes.NewReader(iconPNGData)
+	GuiLifeIconImage := canvas.NewImageFromReader(pngReader, "Icon.png")
+	GuiLifeIconImage.SetMinSize(fyne.NewSize(128, 128))
+	GuiLifeIconImage.FillMode = canvas.ImageFillContain
+
 	lc := NewLifeContainer()
 
 	if len(os.Args) > 1 {
@@ -804,6 +814,7 @@ func main() {
 		if len(tabs.DocTabs.Items) == 0 {
 			myApp.Quit()
 		}
+		currentLC = tabs.CurrentLifeContainer()
 	}
 
 	if len(os.Args) > 2 {
@@ -905,6 +916,7 @@ func main() {
 			myApp.Quit()
 		}
 		tabs.Refresh()
+		currentLC = tabs.CurrentLifeContainer()
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
 
@@ -932,8 +944,16 @@ func main() {
 	})
 	fileInfoMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyI, Modifier: modKey}
 
+	fileAboutMenuItem := fyne.NewMenuItem("About GuiLife", func() {
+		aboutContent := container.New(layout.NewVBoxLayout(), GuiLifeIconImage,
+			widget.NewLabel("GuiLife"), widget.NewLabel("Copyright 2024,2025"),
+			widget.NewLabel(""), widget.NewLabel("written by Mitch Patenaude"))
+		aboutDialog := dialog.NewCustom("About GuiLife", "ok", aboutContent, myWindow)
+		aboutDialog.Show()
+	})
+
 	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
-		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem)
+		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem, fileAboutMenuItem)
 
 	exampleLoader := func(e examples.Example) func() {
 		return func() {
