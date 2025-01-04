@@ -34,7 +34,7 @@ import (
 const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
-	historySize = 50 // really should be configurable
+	historySize = 0 // really should be configurable
 )
 
 var (
@@ -78,7 +78,9 @@ func NewLifeContainer() *LifeContainer {
 	lc.Control = NewControlBar(lc.Sim)
 	lc.Status = NewStatusBar(lc.Sim, lc.Control)
 
-	lc.container = container.NewBorder(lc.Control, lc.Status, nil, nil, container.NewScroll(lc.Sim))
+	scroll := container.NewScroll(lc.Sim)
+	scroll.Direction = container.ScrollNone
+	lc.container = container.NewBorder(lc.Control, lc.Status, nil, nil, scroll)
 
 	lc.ExtendBaseWidget(lc)
 	return lc
