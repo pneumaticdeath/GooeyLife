@@ -1,0 +1,14 @@
+Website = "https://patenaude.io/"
+
+[Details]
+  Icon = "Icon.png"
+  Name = "GuiLife"
+  ID = "io.patenaude.guiLife"
+  Version = "0.1.1"
+  Buid = 1
+
+[LinuxAndBSD]
+  GenericName = "Game of Life"
+  Categories = ["Games"]
+  Comment = "Run simulations of Conway's Game of Life"
+  Keywords = ["life", "game"]
