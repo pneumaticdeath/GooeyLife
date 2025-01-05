@@ -8,8 +8,8 @@
 *.so
 *.dylib
 *.zip
-guiLife
-guiLife.app
+GooeyLife
+GooeyLife.*
 .DS_Store
 
 # Test binary, built with `go test -c`
