@@ -2,8 +2,8 @@ Website = "https://patenaude.io/"
 
 [Details]
   Icon = "Icon.png"
-  Name = "GuiLife"
-  ID = "io.patenaude.guiLife"
+  Name = "GooeyLife"
+  ID = "io.patenaude.gooeylife"
   Version = "0.1.1"
   Build = 3
 
