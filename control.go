@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -87,6 +88,19 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	controlBar.life.EditMode.AddListener(binding.NewDataListener(func() {
 		if controlBar.life.IsEditable() {
 			controlBar.StopSim()
+			if controlBar.life.Scale < 4.0 {
+				confirm := dialog.NewConfirm("Scale is very small",
+					"Each cell is very small on the screen.  Would you like to zoom in?",
+					func(answer bool) {
+						if answer {
+							// if we don't disable auto-zoom, it will just zoom right back out
+							controlBar.life.SetAutoZoom(false)
+							controlBar.life.Zoom(controlBar.life.Scale / 5)
+						}
+					},
+					mainWindow)
+				confirm.Show()
+			}
 			controlBar.life.CellColor = editingCellColor
 			controlBar.life.Draw()
 		} else {

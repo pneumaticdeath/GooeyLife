@@ -48,9 +48,11 @@ func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuIte
 	return items
 }
 
+var mainWindow fyne.Window
+
 func main() {
 	myApp := app.NewWithID("io.patenaude.gooeylife")
-	myWindow := myApp.NewWindow("Conway's Game of Life")
+	mainWindow = myApp.NewWindow("Conway's Game of Life")
 
 	pngReader := bytes.NewReader(iconPNGData)
 	GuiLifeIconImage := canvas.NewImageFromReader(pngReader, "Icon.png")
@@ -62,7 +64,7 @@ func main() {
 	if len(os.Args) > 1 {
 		newGame, err := golife.Load(os.Args[1])
 		if err != nil {
-			dialog.ShowError(err, myWindow)
+			dialog.ShowError(err, mainWindow)
 		} else {
 			lc.SetGame(newGame)
 		}
@@ -89,7 +91,7 @@ func main() {
 		for index := range remaining {
 			newGame, err := golife.Load(remaining[index])
 			if err != nil {
-				dialog.ShowError(err, myWindow)
+				dialog.ShowError(err, mainWindow)
 			} else {
 				nextlc := NewLifeContainer()
 				nextlc.SetGame(newGame)
@@ -105,13 +107,13 @@ func main() {
 
 	fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
-			dialog.ShowError(err, myWindow)
+			dialog.ShowError(err, mainWindow)
 		} else if reader != nil {
 			lifeReader := golife.FindReader(reader.URI().Name())
 			newGame, readErr := lifeReader(reader)
 			defer reader.Close()
 			if readErr != nil {
-				dialog.ShowError(readErr, myWindow)
+				dialog.ShowError(readErr, mainWindow)
 			} else {
 				newGame.Filename = reader.URI().Path()
 				tabs.SetCurrentGame(newGame)
@@ -120,11 +122,11 @@ func main() {
 			// Now we save where we opend this file so that we can default to it next time.
 			parentURI, parErr := storage.Parent(reader.URI())
 			if parErr != nil {
-				dialog.ShowError(parErr, myWindow)
+				dialog.ShowError(parErr, mainWindow)
 			} else {
 				tmpURI, uriErr := storage.ListerForURI(parentURI)
 				if uriErr != nil {
-					dialog.ShowError(uriErr, myWindow)
+					dialog.ShowError(uriErr, mainWindow)
 				} else {
 					lastDirURI = tmpURI
 				}
@@ -134,28 +136,28 @@ func main() {
 
 	fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
 		if err != nil {
-			dialog.ShowError(err, myWindow)
+			dialog.ShowError(err, mainWindow)
 		} else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
-			dialog.ShowError(errors.New("File doesn't have proper extension"), myWindow)
+			dialog.ShowError(errors.New("File doesn't have proper extension"), mainWindow)
 			writer.Close()
 			/* // Don't actually delete for now
 			   delErr := storage.Delete(writer.URI())
 			   if delErr != nil {
-			       dialog.ShowError(delErr, myWindow)
+			       dialog.ShowError(delErr, mainWindow)
 			   }
 			*/
 		} else if writer != nil {
 			write_err := currentLC.Sim.Game.WriteRLE(writer)
 			if write_err != nil {
-				dialog.ShowError(write_err, myWindow)
+				dialog.ShowError(write_err, mainWindow)
 			}
 			parURI, parErr := storage.Parent(writer.URI())
 			if parErr != nil {
-				dialog.ShowError(parErr, myWindow)
+				dialog.ShowError(parErr, mainWindow)
 			} else {
 				tmpURI, uriErr := storage.ListerForURI(parURI)
 				if uriErr != nil {
-					dialog.ShowError(uriErr, myWindow)
+					dialog.ShowError(uriErr, mainWindow)
 				} else {
 					lastDirURI = tmpURI
 				}
@@ -190,7 +192,7 @@ func main() {
 
 	fileOpenMenuItem := fyne.NewMenuItem("Open", func() {
 		currentLC.Control.StopSim()
-		fileOpen := dialog.NewFileOpen(fileOpenCallback, myWindow)
+		fileOpen := dialog.NewFileOpen(fileOpenCallback, mainWindow)
 		fileOpen.SetFilter(lifeFileExtensionsFilter)
 		fileOpen.SetLocation(lastDirURI)
 		fileOpen.Show()
@@ -199,7 +201,7 @@ func main() {
 
 	fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
 		currentLC.Control.StopSim()
-		fileSave := dialog.NewFileSave(fileSaveCallback, myWindow)
+		fileSave := dialog.NewFileSave(fileSaveCallback, mainWindow)
 		fileSave.SetFilter(saveLifeExtensionsFilter)
 		fileSave.SetLocation(lastDirURI)
 		fileSave.Show()
@@ -208,7 +210,7 @@ func main() {
 
 	fileInfoMenuItem := fyne.NewMenuItem("Get info", func() {
 		title, content := currentLC.Sim.GetGameInfo()
-		dialog.ShowInformation(title, content, myWindow)
+		dialog.ShowInformation(title, content, mainWindow)
 	})
 	fileInfoMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyI, Modifier: modKey}
 
@@ -217,7 +219,7 @@ func main() {
 			widget.NewLabel("GuiLife"), widget.NewLabel("Copyright 2024,2025"),
 			widget.NewLabel("by Mitch Patenaude"),
 			widget.NewLabel("Examples copyright of their respective discoverers"))
-		aboutDialog := dialog.NewCustom("About GuiLife", "ok", aboutContent, myWindow)
+		aboutDialog := dialog.NewCustom("About GuiLife", "ok", aboutContent, mainWindow)
 		aboutDialog.Show()
 	})
 
@@ -255,9 +257,9 @@ func main() {
 
 	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu)
 
-	myWindow.SetMainMenu(mainMenu)
+	mainWindow.SetMainMenu(mainMenu)
 
-	myWindow.SetContent(tabs)
+	mainWindow.SetContent(tabs)
 
 	toggleRun := func(shortcut fyne.Shortcut) {
 		if currentLC.Control.IsRunning() {
@@ -267,7 +269,7 @@ func main() {
 		}
 	}
 
-	myWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
+	mainWindow.Canvas().AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyR, Modifier: modKey}, toggleRun)
 	keyPressHandler := func(keyEvent *fyne.KeyEvent) {
 		switch keyEvent.Name {
 		case fyne.KeyUp:
@@ -284,21 +286,21 @@ func main() {
 			// fmt.Println("Got unexpected key", keyEvent.Name)
 		}
 	}
-	myWindow.Canvas().SetOnTypedKey(keyPressHandler)
+	mainWindow.Canvas().SetOnTypedKey(keyPressHandler)
 
-	myWindow.SetOnDropped(func(pos fyne.Position, files []fyne.URI) {
+	mainWindow.SetOnDropped(func(pos fyne.Position, files []fyne.URI) {
 		if len(files) >= 1 {
 			games := make([]*golife.Game, 0, len(files))
 			for index := range files {
 				gameParser := golife.FindReader(files[index].Name())
 				gameReader, err := storage.Reader(files[index])
 				if err != nil {
-					dialog.ShowError(err, myWindow)
+					dialog.ShowError(err, mainWindow)
 					continue
 				}
 				newGame, err := gameParser(gameReader)
 				if err != nil {
-					dialog.ShowError(err, myWindow)
+					dialog.ShowError(err, mainWindow)
 				} else if newGame != nil {
 					newGame.Filename = files[index].Path()
 					games = append(games, newGame)
@@ -322,8 +324,8 @@ func main() {
 
 	// This is a workaround for a bug in Linux
 	// initial layout.
-	myWindow.Resize(fyne.NewSize(1028, 770))
-	myWindow.Show()
-	myWindow.Resize(fyne.NewSize(1024, 768))
+	mainWindow.Resize(fyne.NewSize(1028, 770))
+	mainWindow.Show()
+	mainWindow.Resize(fyne.NewSize(1024, 768))
 	myApp.Run()
 }
