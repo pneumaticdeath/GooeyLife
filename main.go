@@ -144,7 +144,7 @@ func NewLifeSim() *LifeSim {
 }
 
 func (ls *LifeSim) MinSize() fyne.Size {
-	return fyne.NewSize(150, 150)
+	return fyne.NewSize(150, 150) // This probably shouldn't be hard-coded
 }
 
 func (ls *LifeSim) SetAutoZoom(az bool) {
