@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"math"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -139,7 +140,7 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 func (ls *LifeSim) GetGameInfo() (string, string) {
 	var title string = "Blank Game"
 	if ls.Game.Filename != "" {
-		title = ls.Game.Filename
+		title = filepath.Base(ls.Game.Filename)
 	}
 	var content strings.Builder
 	for _, comment := range ls.Game.Comments {

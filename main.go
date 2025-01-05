@@ -55,9 +55,9 @@ func main() {
 	mainWindow = myApp.NewWindow("Conway's Game of Life")
 
 	pngReader := bytes.NewReader(iconPNGData)
-	GuiLifeIconImage := canvas.NewImageFromReader(pngReader, "Icon.png")
-	GuiLifeIconImage.SetMinSize(fyne.NewSize(128, 128))
-	GuiLifeIconImage.FillMode = canvas.ImageFillContain
+	GooeyLifeIconImage := canvas.NewImageFromReader(pngReader, "Icon.png")
+	GooeyLifeIconImage.SetMinSize(fyne.NewSize(128, 128))
+	GooeyLifeIconImage.FillMode = canvas.ImageFillContain
 
 	lc := NewLifeContainer()
 
@@ -215,11 +215,11 @@ func main() {
 	fileInfoMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyI, Modifier: modKey}
 
 	fileAboutMenuItem := fyne.NewMenuItem("About", func() {
-		aboutContent := container.New(layout.NewVBoxLayout(), GuiLifeIconImage,
-			widget.NewLabel("GuiLife"), widget.NewLabel("Copyright 2024,2025"),
+		aboutContent := container.New(layout.NewVBoxLayout(), GooeyLifeIconImage,
+			widget.NewLabel("GooeyLife"), widget.NewLabel("Copyright 2024,2025"),
 			widget.NewLabel("by Mitch Patenaude"),
 			widget.NewLabel("Examples copyright of their respective discoverers"))
-		aboutDialog := dialog.NewCustom("About GuiLife", "ok", aboutContent, mainWindow)
+		aboutDialog := dialog.NewCustom("About GooeyLife", "ok", aboutContent, mainWindow)
 		aboutDialog.Show()
 	})
 
