@@ -952,7 +952,8 @@ func main() {
 	fileAboutMenuItem := fyne.NewMenuItem("About", func() {
 		aboutContent := container.New(layout.NewVBoxLayout(), GuiLifeIconImage,
 			widget.NewLabel("GuiLife"), widget.NewLabel("Copyright 2024,2025"),
-			widget.NewLabel(""), widget.NewLabel("written by Mitch Patenaude"))
+			widget.NewLabel("by Mitch Patenaude"),
+			widget.NewLabel("Examples copyright of their respective discoverers"))
 		aboutDialog := dialog.NewCustom("About GuiLife", "ok", aboutContent, myWindow)
 		aboutDialog.Show()
 	})
