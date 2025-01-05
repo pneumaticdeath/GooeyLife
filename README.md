@@ -1,4 +1,4 @@
-# guiLife
+# GooeyLife
 
 Copyright 2024, 2025 Mitch Patenaude
 
