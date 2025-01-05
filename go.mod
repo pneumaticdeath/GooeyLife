@@ -1,4 +1,4 @@
-module github.com/pneumaticdeath/guiLife
+module github.com/pneumaticdeath/GooeyLife
 
 go 1.23.4
 
