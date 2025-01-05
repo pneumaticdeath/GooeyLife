@@ -11,6 +11,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// The StatusBar is a simple mechanism for displaying the status of
+// simulation/game.
+
 type StatusBar struct {
 	widget.BaseWidget
 	life                *LifeSim

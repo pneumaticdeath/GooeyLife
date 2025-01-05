@@ -11,6 +11,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// The LifeTabs structure allows the app to have multiple
+// games/simulations loaded at once, and each can be
+// controlled individually.
+
 type LifeTabs struct {
 	widget.BaseWidget
 

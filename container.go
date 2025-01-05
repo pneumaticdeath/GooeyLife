@@ -8,8 +8,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// const historySize = 10 // really should be configurable
-
 // LifeContainer is the overall container managing a single
 // simulation.  There is one per tab currently.  This has
 // three major components.
@@ -22,7 +20,9 @@ type LifeContainer struct {
 	// The Sim element contains the basic logic of
 	// the simulation, and encapsulates the logic
 	// from the golife.Game class and drawing
-	// the field of cells.
+	// the field of cells. It also dealth with
+	// the logic of managing the part of the
+	// population of cells that is visible on screen.
 	Sim *LifeSim
 
 	// The Control element manages all aspects of

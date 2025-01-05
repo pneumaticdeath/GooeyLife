@@ -25,7 +25,8 @@ var (
 */
 
 // LifeSim - encapsulates everything about the simulation and displaying it on
-// a canvas/container, but doesn't handle the animation, control or reporting
+// a canvas/container, including the amount of the population that is visible
+// (zoom level), but doesn't handle the animation, control or reporting
 
 type LifeSim struct {
 	widget.BaseWidget

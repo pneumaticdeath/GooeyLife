@@ -15,6 +15,16 @@ import (
 	xlayout "fyne.io/x/fyne/layout"
 )
 
+// The ControlBar structure controls all aspects
+// of the animaiton and manipulation of the
+// running simulation.  It allows the user to
+// step the game forward (to the next generation
+// of cells), backward (if the hisotry has any
+// previous generations), or to run automatically
+// at a given speed.  Some functions (like the
+// zoom functions) have to be passed down to the
+// LifeSim object that encapsulates the game.
+
 type ControlBar struct {
 	widget.BaseWidget
 	life               *LifeSim
