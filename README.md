@@ -13,6 +13,7 @@ Linux, but currently lack a windows build machine.
 Check out the [releases](https://github.com/pneumaticdeath/guiLife/releases) page for a selection of builds.
 
 Here are some screenshots:
+
 The About Box
 ![About Box](images/AboutBox.png)
 
