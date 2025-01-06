@@ -96,8 +96,6 @@ func main() {
 	lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt", ".life", ".life.txt", ".cells", ".cells.txt"}}
 	saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt"}}
 
-	var lastDirURI fyne.ListableURI
-
 	fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, mainWindow)
@@ -113,17 +111,7 @@ func main() {
 				tabs.Refresh()
 			}
 			// Now we save where we opend this file so that we can default to it next time.
-			parentURI, parErr := storage.Parent(reader.URI())
-			if parErr != nil {
-				dialog.ShowError(parErr, mainWindow)
-			} else {
-				tmpURI, uriErr := storage.ListerForURI(parentURI)
-				if uriErr != nil {
-					dialog.ShowError(uriErr, mainWindow)
-				} else {
-					lastDirURI = tmpURI
-				}
-			}
+			Config.SetLastUsedDirURI(reader.URI())
 		}
 	}
 
@@ -144,17 +132,7 @@ func main() {
 			if write_err != nil {
 				dialog.ShowError(write_err, mainWindow)
 			}
-			parURI, parErr := storage.Parent(writer.URI())
-			if parErr != nil {
-				dialog.ShowError(parErr, mainWindow)
-			} else {
-				tmpURI, uriErr := storage.ListerForURI(parURI)
-				if uriErr != nil {
-					dialog.ShowError(uriErr, mainWindow)
-				} else {
-					lastDirURI = tmpURI
-				}
-			}
+			Config.SetLastUsedDirURI(writer.URI())
 			writer.Close()
 		}
 	}
@@ -187,7 +165,7 @@ func main() {
 		currentLC.Control.StopSim()
 		fileOpen := dialog.NewFileOpen(fileOpenCallback, mainWindow)
 		fileOpen.SetFilter(lifeFileExtensionsFilter)
-		fileOpen.SetLocation(lastDirURI)
+		fileOpen.SetLocation(Config.LastUsedDirURI())
 		fileOpen.Show()
 	})
 	fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
@@ -196,7 +174,7 @@ func main() {
 		currentLC.Control.StopSim()
 		fileSave := dialog.NewFileSave(fileSaveCallback, mainWindow)
 		fileSave.SetFilter(saveLifeExtensionsFilter)
-		fileSave.SetLocation(lastDirURI)
+		fileSave.SetLocation(Config.LastUsedDirURI())
 		fileSave.Show()
 	})
 	fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}

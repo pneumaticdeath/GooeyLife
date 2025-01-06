@@ -8,20 +8,19 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	gameHistorySizeKey = "io.patenaude.gooeylife.history_size"
-
-	autoZoomDefaultKey = "io.patenaude.gooeylife.auto_zoom_default"
-
-	pausedCellColorKey  = "io.patenaude.gooeylife.paused_color"
-	runningCellColorKey = "io.patenaude.gooeylife.running_color"
-	editCellColorKey    = "io.patenaude.gooeyLife.edit_color"
-
-	defaultHistorySize = 10
+	gameHistorySizeKey   = "io.patenaude.gooeylife.history_size"
+	autoZoomDefaultKey   = "io.patenaude.gooeylife.auto_zoom_default"
+	lastUsedDirectoryKey = "io.patenaude.gooeylife.last_dir_url"
+	pausedCellColorKey   = "io.patenaude.gooeylife.paused_color"
+	runningCellColorKey  = "io.patenaude.gooeylife.running_color"
+	editCellColorKey     = "io.patenaude.gooeyLife.edit_color"
+	defaultHistorySize   = 10
 )
 
 var (
@@ -142,4 +141,48 @@ func (c ConfigT) ShowPreferencesDialog() {
 			c.SetAutoZoomDefault(autoZoomDefaultCheck.Checked)
 		}
 	}, mainWindow)
+}
+
+func (c *ConfigT) LastUsedDirURI() fyne.ListableURI {
+	lastUriString := c.app.Preferences().StringWithFallback(lastUsedDirectoryKey, "")
+	if lastUriString == "" {
+		return nil
+	}
+	uri := storage.NewURI(lastUriString)
+	listable, err := storage.CanList(uri)
+	if err != nil {
+		return nil
+	}
+	for !listable {
+		uri, err = storage.Parent(uri)
+		if err != nil {
+			fyne.LogError("Unable to walk up file tree", err)
+			return nil
+		}
+		listable, err = storage.CanList(uri)
+	}
+	listableUri, err := storage.ListerForURI(uri)
+	if err != nil {
+		fyne.LogError("Can't make listable URI:", err)
+		return nil
+	}
+	return listableUri
+}
+
+func (c *ConfigT) SetLastUsedDirURI(uri fyne.URI) {
+	// parent := uri // make a copy of the URI
+	listable, err := storage.CanList(uri)
+	if err != nil {
+		fyne.LogError("Can't check listability of URI:", err)
+		return
+	}
+	for !listable {
+		uri, err = storage.Parent(uri)
+		if err != nil {
+			fyne.LogError("Unable to walk up file tree", err)
+			return
+		}
+		listable, _ = storage.CanList(uri)
+	}
+	c.app.Preferences().SetString(lastUsedDirectoryKey, uri.String())
 }
