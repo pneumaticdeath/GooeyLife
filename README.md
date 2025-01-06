@@ -26,7 +26,7 @@ Handles BIG patterns (this one is about 260K cells, I've loaded patterns of over
 ![Big Pattern](images/BigPattern.png)
 
 Zoom in on complex patterns
-![Zoomed In](images/BigPatternsZoomedIn.png)
+![Zoomed In](images/BigPatternZoomedIn.png)
 
 Edit your settings
 ![Settings pane](images/PreferencesPane.png)
