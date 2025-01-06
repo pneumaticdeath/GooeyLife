@@ -85,7 +85,7 @@ func (c ConfigT) fetchColor(key string, def color.Color) color.Color {
 		return def
 	}
 	// the values we get back at 16 bit scaled, but we neeed 8 bit values
-	col := color.NRGBA{R: uint8(attr[0] >> 8), G: uint8(attr[1] >> 8), B: uint8(attr[2] >> 8), A: uint8(attr[3] >> 8)}
+	col := color.NRGBA{R: uint8(attr[0]), G: uint8(attr[1]), B: uint8(attr[2]), A: uint8(attr[3])}
 	return col
 }
 
