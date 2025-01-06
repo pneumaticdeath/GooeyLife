@@ -17,14 +17,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-/*
-var (
-	pausedCellColor  color.Color = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
-	runningCellColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
-	editingCellColor color.Color = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
-)
-*/
-
 // LifeSim - encapsulates everything about the simulation and displaying it on
 // a canvas/container, including the amount of the population that is visible
 // (zoom level), but doesn't handle the animation, control or reporting
@@ -54,16 +46,16 @@ func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
 func NewLifeSim() *LifeSim {
 	sim := &LifeSim{}
 	sim.Game = golife.NewGame()
-	sim.Game.SetHistorySize(historySize)
+	sim.Game.SetHistorySize(Config.HistorySize())
 	sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
 	sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
 	sim.drawingSurface = container.NewWithoutLayout()
-	sim.CellColor = pausedCellColor
+	sim.CellColor = Config.PausedCellColor()
 	sim.useAlphaDensity = false
 	sim.GlyphStyle = "RoundedRectangle"
 	sim.BackgroundColor = color.Black
 	sim.autoZoom = binding.NewBool()
-	sim.autoZoom.Set(true)
+	sim.autoZoom.Set(Config.AutoZoomDefault())
 	sim.autoZoom.AddListener(binding.NewDataListener(func() { sim.Draw() }))
 	sim.EditMode = binding.NewBool()
 	sim.EditMode.Set(false)

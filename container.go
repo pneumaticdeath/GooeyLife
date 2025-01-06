@@ -57,7 +57,7 @@ func (lc *LifeContainer) CreateRenderer() fyne.WidgetRenderer {
 func (lc *LifeContainer) SetGame(game *golife.Game) {
 	lc.Control.StopSim()
 	lc.Sim.Game = game
-	lc.Sim.Game.SetHistorySize(historySize)
+	lc.Sim.Game.SetHistorySize(Config.HistorySize())
 	lc.Sim.ResizeToFit()
 	lc.Sim.Draw()
 }

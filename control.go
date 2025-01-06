@@ -106,15 +106,16 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 							// if we don't disable auto-zoom, it will just zoom right back out
 							controlBar.life.SetAutoZoom(false)
 							controlBar.life.Zoom(controlBar.life.Scale / 5)
+							controlBar.life.Draw()
 						}
 					},
 					mainWindow)
 				confirm.Show()
 			}
-			controlBar.life.CellColor = editingCellColor
+			controlBar.life.CellColor = Config.EditCellColor()
 			controlBar.life.Draw()
 		} else {
-			controlBar.life.CellColor = pausedCellColor
+			controlBar.life.CellColor = Config.PausedCellColor()
 			controlBar.life.Draw()
 		}
 	}))
@@ -179,15 +180,15 @@ func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (controlBar *ControlBar) RunGame() {
-	controlBar.life.CellColor = runningCellColor
+	controlBar.life.CellColor = Config.RunningCellColor()
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
 	if controlBar.life.IsEditable() {
-		controlBar.life.CellColor = editingCellColor
+		controlBar.life.CellColor = Config.EditCellColor()
 	} else {
-		controlBar.life.CellColor = pausedCellColor
+		controlBar.life.CellColor = Config.PausedCellColor()
 	}
 	controlBar.life.Draw()
 }

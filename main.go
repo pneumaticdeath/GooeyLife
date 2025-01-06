@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"errors"
-	"image/color"
 	"os"
 	"runtime"
 
@@ -25,13 +24,6 @@ import (
 const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
-	historySize = 10 // really should be configurable
-)
-
-var (
-	pausedCellColor  color.Color = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
-	runningCellColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
-	editingCellColor color.Color = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
 )
 
 //go:embed Icon.png
@@ -52,6 +44,7 @@ var mainWindow fyne.Window
 
 func main() {
 	myApp := app.NewWithID("io.patenaude.gooeylife")
+	InitConfig(myApp)
 	mainWindow = myApp.NewWindow("Conway's Game of Life")
 
 	pngReader := bytes.NewReader(iconPNGData)
@@ -223,8 +216,14 @@ func main() {
 		aboutDialog.Show()
 	})
 
+	fileSettingsMenuItem := fyne.NewMenuItem("Settings", func() {
+		Config.ShowPreferencesDialog()
+	})
+	fileSettingsMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyComma, Modifier: modKey}
+
 	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
-		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem, fileAboutMenuItem)
+		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem, fileSettingsMenuItem,
+		fileAboutMenuItem)
 
 	exampleLoader := func(e examples.Example) func() {
 		return func() {
