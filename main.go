@@ -31,11 +31,22 @@ var iconPNGData []byte
 
 func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuItem {
 	exList := examples.ListExamples()
-	items := make([]*fyne.MenuItem, 0, len(exList))
-
+	items := make([]*fyne.MenuItem, 0, 10)
+	subItems := make([]*fyne.MenuItem, 0, 10)
+	lastCategory := exList[0].Category // assumes at least one example
 	for _, ex := range exList {
-		items = append(items, fyne.NewMenuItem(ex.Title, loader(ex)))
+		if ex.Category != lastCategory {
+			newMenuItem := fyne.NewMenuItem(lastCategory, func() {})
+			newMenuItem.ChildMenu = fyne.NewMenu(lastCategory, subItems...)
+			items = append(items, newMenuItem)
+			subItems = make([]*fyne.MenuItem, 0, 10)
+		}
+		subItems = append(subItems, fyne.NewMenuItem(ex.Title, loader(ex)))
+		lastCategory = ex.Category
 	}
+	newMenuItem := fyne.NewMenuItem(lastCategory, func() {})
+	newMenuItem.ChildMenu = fyne.NewMenu(lastCategory, subItems...)
+	items = append(items, newMenuItem)
 
 	return items
 }
@@ -196,7 +207,6 @@ func main() {
 
 	fileSettingsMenuItem := fyne.NewMenuItem("Settings", func() {
 		Config.ShowPreferencesDialog()
-		// currentLC.Sim.ForceRedraw()
 	})
 	fileSettingsMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyComma, Modifier: modKey}
 
