@@ -105,21 +105,27 @@ func (c ConfigT) ShowPreferencesDialog() {
 	pausedColorPickerButton := widget.NewButtonWithIcon("Paused cells", theme.ColorPaletteIcon(), func() {
 		picker := dialog.NewColorPicker("Paused Cell Color", "", func(clr color.Color) {
 			c.SetPausedCellColor(clr)
+			mainWindow.Canvas().Content().Refresh()
 		}, mainWindow)
+		picker.Advanced = true
 		picker.SetColor(c.PausedCellColor())
 		picker.Show()
 	})
 	runningColorPickerButton := widget.NewButtonWithIcon("Running cells", theme.ColorPaletteIcon(), func() {
 		picker := dialog.NewColorPicker("Running Cell Color", "", func(clr color.Color) {
 			c.SetRunningCellColor(clr)
+			mainWindow.Canvas().Content().Refresh()
 		}, mainWindow)
+		picker.Advanced = true
 		picker.SetColor(c.RunningCellColor())
 		picker.Show()
 	})
 	editColorPickerButton := widget.NewButtonWithIcon("Editing cells", theme.ColorPaletteIcon(), func() {
 		picker := dialog.NewColorPicker("Editing Cell Color", "", func(clr color.Color) {
 			c.SetEditCellColor(clr)
+			mainWindow.Canvas().Content().Refresh()
 		}, mainWindow)
+		picker.Advanced = true
 		picker.SetColor(c.EditCellColor())
 		picker.Show()
 	})

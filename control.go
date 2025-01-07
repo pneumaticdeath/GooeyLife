@@ -112,10 +112,10 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 					mainWindow)
 				confirm.Show()
 			}
-			controlBar.life.CellColor = Config.EditCellColor()
+			controlBar.life.State = simEditing
 			controlBar.life.Draw()
 		} else {
-			controlBar.life.CellColor = Config.PausedCellColor()
+			controlBar.life.State = simPaused
 			controlBar.life.Draw()
 		}
 	}))
@@ -180,15 +180,15 @@ func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (controlBar *ControlBar) RunGame() {
-	controlBar.life.CellColor = Config.RunningCellColor()
+	controlBar.life.State = simRunning
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
 	if controlBar.life.IsEditable() {
-		controlBar.life.CellColor = Config.EditCellColor()
+		controlBar.life.State = simEditing
 	} else {
-		controlBar.life.CellColor = Config.PausedCellColor()
+		controlBar.life.State = simPaused
 	}
 	controlBar.life.Draw()
 }

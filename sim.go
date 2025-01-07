@@ -17,6 +17,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	simPaused  = iota
+	simRunning = iota
+	simEditing = iota
+)
+
 // LifeSim - encapsulates everything about the simulation and displaying it on
 // a canvas/container, including the amount of the population that is visible
 // (zoom level), but doesn't handle the animation, control or reporting
@@ -30,7 +36,7 @@ type LifeSim struct {
 	LastStepTime                 time.Duration   // Statistic of time taken to calculate the last generation
 	LastDrawTime                 time.Duration   // How long it to draw the last frame
 	drawingSurface               *fyne.Container // The actual drawing surface
-	CellColor                    color.Color     // Color the cells should be draw in
+	State                        int             // State the game is in.
 	useAlphaDensity              bool            // whether to use alpha to adjust color for aggregate pixels
 	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
 	BackgroundColor              color.Color     // Should probably be derived from the theme
@@ -50,7 +56,8 @@ func NewLifeSim() *LifeSim {
 	sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
 	sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
 	sim.drawingSurface = container.NewWithoutLayout()
-	sim.CellColor = Config.PausedCellColor()
+	// sim.CellColor = Config.PausedCellColor()
+	sim.State = simPaused
 	sim.useAlphaDensity = false
 	sim.GlyphStyle = "RoundedRectangle"
 	sim.BackgroundColor = color.Black
@@ -159,6 +166,19 @@ func (ls *LifeSim) GetGameInfo() (string, string) {
 	return title, content.String()
 }
 
+func (ls *LifeSim) ModeColor() color.Color {
+	switch ls.State {
+	case simPaused:
+		return Config.PausedCellColor()
+	case simRunning:
+		return Config.RunningCellColor()
+	case simEditing:
+		return Config.EditCellColor()
+	default:
+		return color.White
+	}
+}
+
 func (ls *LifeSim) Draw() {
 	ls.AutoZoom()
 
@@ -195,6 +215,8 @@ func (ls *LifeSim) Draw() {
 
 	newObjects = append(newObjects, background)
 
+	cellColor := ls.ModeColor()
+
 	pixels := make(map[golife.Cell]int32)
 	maxDens := 1
 
@@ -214,15 +236,15 @@ func (ls *LifeSim) Draw() {
 				var cellGlyph fyne.CanvasObject
 				switch ls.GlyphStyle {
 				case "Rectangle":
-					cellGlyph = canvas.NewRectangle(ls.CellColor)
+					cellGlyph = canvas.NewRectangle(cellColor)
 				case "RoundedRectangle":
-					tmpRect := canvas.NewRectangle(ls.CellColor)
+					tmpRect := canvas.NewRectangle(cellColor)
 					tmpRect.CornerRadius = ls.Scale / 5.0
 					cellGlyph = tmpRect
 				case "Circle":
-					cellGlyph = canvas.NewCircle(ls.CellColor)
+					cellGlyph = canvas.NewCircle(cellColor)
 				default:
-					cellGlyph = canvas.NewLine(ls.CellColor)
+					cellGlyph = canvas.NewLine(cellColor)
 				}
 				cellGlyph.Resize(cellSize)
 				cellGlyph.Move(cellPos)
@@ -237,13 +259,13 @@ func (ls *LifeSim) Draw() {
 			var pixelColor color.Color
 			if ls.useAlphaDensity {
 				density := max(float32(count)/float32(maxDens), float32(0.25))
-				r, g, b, a := ls.CellColor.RGBA()
+				r, g, b, a := cellColor.RGBA()
 				pixelColor = color.NRGBA{R: uint8(r),
 					G: uint8(g),
 					B: uint8(b),
 					A: uint8(float32(a) * density)}
 			} else {
-				pixelColor = ls.CellColor
+				pixelColor = cellColor
 			}
 			pixel := canvas.NewRectangle(pixelColor)
 			pixel.Resize(fyne.NewSize(2, 2))
