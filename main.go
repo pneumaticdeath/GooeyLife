@@ -76,6 +76,7 @@ func main() {
 
 	tabs := NewLifeTabs(lc)
 	currentLC := tabs.CurrentLifeContainer()
+	displayClock := StartDisplayUpdateClock(tabs)
 
 	tabs.DocTabs.OnSelected = func(ti *container.TabItem) {
 		currentLC = tabs.CurrentLifeContainer()
@@ -316,4 +317,5 @@ func main() {
 	mainWindow.Show()
 	mainWindow.Resize(fyne.NewSize(1024, 768))
 	myApp.Run()
+	displayClock.Running = false
 }

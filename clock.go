@@ -16,16 +16,14 @@ import (
 // "LifeTick()" method will block.
 
 type LifeSimClock struct {
-	lifeTicker           chan bool
-	life                 *LifeSim
-	Running              bool
-	DisplayUpdateCadence time.Duration
+	lifeTicker chan bool
+	life       *LifeSim
+	Running    bool
 }
 
 func NewLifeSimClock(sim *LifeSim) *LifeSimClock {
-	clk := &LifeSimClock{make(chan bool, 1), sim, true, time.Second / 60.0}
+	clk := &LifeSimClock{make(chan bool, 1), sim, true}
 	go clk.doLifeTicks()
-	go clk.doDisplayRedraws()
 	return clk
 }
 
@@ -43,9 +41,28 @@ func (clk *LifeSimClock) LifeTick() {
 	clk.lifeTicker <- true // Will block if the last tick hasn't been consumed yet
 }
 
-func (clk *LifeSimClock) doDisplayRedraws() {
+// The DisplayUpdateClock is designed to be a singleton, with only one instance
+// per running process.  It will cause only the selected tab to redraw it's contents
+// which should help when complex simlutations are not in front.
+
+type DisplayUpdateClock struct {
+	DisplayUpdateCadence time.Duration
+	Running              bool
+	tabs                 *LifeTabs
+}
+
+func StartDisplayUpdateClock(t *LifeTabs) *DisplayUpdateClock {
+	duc := &DisplayUpdateClock{time.Second / 60, true, t}
+	go duc.doDisplayRedraws()
+	return duc
+}
+
+func (clk *DisplayUpdateClock) doDisplayRedraws() {
 	for clk.Running {
 		time.Sleep(clk.DisplayUpdateCadence)
-		clk.life.Draw() // the Draw routine checks/clears the Dirty flag
+		lc := clk.tabs.CurrentLifeContainer()
+		if lc != nil {
+			lc.Sim.Draw() // the Draw routine checks/clears the Dirty flag
+		}
 	}
 }

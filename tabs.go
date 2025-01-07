@@ -43,7 +43,10 @@ func (lt *LifeTabs) CurrentLifeContainer() *LifeContainer {
 	co := lt.DocTabs.Selected().Content
 	lc, ok := co.(*LifeContainer)
 	if !ok {
+		// Not sure how this might happen, but perhaps a race
+		// condition when a tab is being created or destroyed
 		fmt.Println("Unable to convert tab content to LifeContainer")
+		return nil
 	}
 	return lc
 }
