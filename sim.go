@@ -43,6 +43,7 @@ type LifeSim struct {
 	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
 	EditMode                     binding.Bool    // Whether the sim is in editable mode
 	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
+	Dirty                        bool            // Does the screen need to be redrawn
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
@@ -67,6 +68,7 @@ func NewLifeSim() *LifeSim {
 	sim.EditMode = binding.NewBool()
 	sim.EditMode.Set(false)
 	sim.ExtendBaseWidget(sim)
+	sim.Dirty = true
 	return sim
 }
 
@@ -89,7 +91,7 @@ func (ls *LifeSim) IsEditable() bool {
 }
 
 func (ls *LifeSim) Resize(size fyne.Size) {
-	ls.Draw()
+	ls.Dirty = true
 	ls.BaseWidget.Resize(size)
 }
 
@@ -104,7 +106,7 @@ func (ls *LifeSim) Dragged(e *fyne.DragEvent) {
 
 	ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = ls.BoxDisplayMin.X-cells_x, ls.BoxDisplayMax.X-cells_x
 	ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = ls.BoxDisplayMin.Y-cells_y, ls.BoxDisplayMax.Y-cells_y
-	ls.Draw()
+	ls.Dirty = true
 }
 
 func (ls *LifeSim) DragEnd() {
@@ -132,7 +134,7 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 		} else {
 			ls.Game.AddCell(cell)
 		}
-		ls.Draw()
+		ls.Dirty = true
 	}
 }
 
@@ -187,6 +189,11 @@ func (ls *LifeSim) Draw() {
 		// fmt.Println("Can't draw on a zero_sized window")
 		return
 	}
+
+	if !ls.Dirty {
+		return
+	}
+	ls.Dirty = false
 
 	start := time.Now()
 

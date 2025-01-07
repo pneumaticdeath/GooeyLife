@@ -87,11 +87,11 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 	// controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 
-	controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() { controlBar.life.ResizeToFit(); controlBar.life.Draw() })
+	controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() { controlBar.life.ResizeToFit(); controlBar.life.Dirty = true })
 
 	controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func() { controlBar.ZoomIn() })
 
-	controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle", "RoundedRectangle", "Circle"}, func(selection string) { controlBar.life.GlyphStyle = selection; controlBar.life.Draw() })
+	controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle", "RoundedRectangle", "Circle"}, func(selection string) { controlBar.life.GlyphStyle = selection; controlBar.life.Dirty = true })
 	controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
 
 	controlBar.editCheckBox = widget.NewCheckWithData("Edit mode", controlBar.life.EditMode)
@@ -106,17 +106,17 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 							// if we don't disable auto-zoom, it will just zoom right back out
 							controlBar.life.SetAutoZoom(false)
 							controlBar.life.Zoom(controlBar.life.Scale / 5)
-							controlBar.life.Draw()
+							controlBar.life.Dirty = true
 						}
 					},
 					mainWindow)
 				confirm.Show()
 			}
 			controlBar.life.State = simEditing
-			controlBar.life.Draw()
+			controlBar.life.Dirty = true
 		} else {
 			controlBar.life.State = simPaused
-			controlBar.life.Draw()
+			controlBar.life.Dirty = true
 		}
 	}))
 
@@ -161,13 +161,13 @@ func (controlBar *ControlBar) DisableAutoZoom() {
 func (controlBar *ControlBar) ZoomIn() {
 	controlBar.DisableAutoZoom()
 	controlBar.life.Zoom(1.0 / zoomFactor)
-	controlBar.life.Draw()
+	controlBar.life.Dirty = true
 }
 
 func (controlBar *ControlBar) ZoomOut() {
 	controlBar.DisableAutoZoom()
 	controlBar.life.Zoom(zoomFactor)
-	controlBar.life.Draw()
+	controlBar.life.Dirty = true
 }
 
 func (controlBar *ControlBar) setRunStopText(label string, icon fyne.Resource) {
@@ -190,14 +190,14 @@ func (controlBar *ControlBar) RunGame() {
 	} else {
 		controlBar.life.State = simPaused
 	}
-	controlBar.life.Draw()
+	controlBar.life.Dirty = true
 }
 
 func (controlBar *ControlBar) StepForward() {
 	controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 	controlBar.updateCadence = time.Since(controlBar.lastUpdateTime)
 	controlBar.lastUpdateTime = time.Now()
-	controlBar.clk.Tick()
+	controlBar.clk.LifeTick()
 	if len(controlBar.life.Game.History) > 0 {
 		controlBar.backwardStepButton.Enable() // We might have history now
 	}
@@ -214,5 +214,5 @@ func (controlBar *ControlBar) StepBackward() {
 	if len(controlBar.life.Game.History) == 0 {
 		controlBar.backwardStepButton.Disable()
 	}
-	controlBar.life.Draw()
+	controlBar.life.Dirty = true
 }

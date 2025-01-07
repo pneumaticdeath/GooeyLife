@@ -23,8 +23,8 @@ type StatusBar struct {
 	ScaleDisplay        *widget.Label
 	LastStepTimeDisplay *widget.Label
 	LastDrawTimeDisplay *widget.Label
-	TargetFPSDisplay    *widget.Label
-	ActualFPSDisplay    *widget.Label
+	TargetGPSDisplay    *widget.Label
+	ActualGPSDisplay    *widget.Label
 	UpdateCadence       time.Duration
 	bar                 *fyne.Container
 }
@@ -35,12 +35,12 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 	scaleDisp := widget.NewLabel("")
 	lastStepTimeDisp := widget.NewLabel("")
 	lastDrawTimeDisp := widget.NewLabel("")
-	targetFPSDisp := widget.NewLabel("")
-	actualFPSDisp := widget.NewLabel("")
+	targetGPSDisp := widget.NewLabel("")
+	actualGPSDisp := widget.NewLabel("")
 	statBar := &StatusBar{life: sim, control: cb, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
 		ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
-		LastDrawTimeDisplay: lastDrawTimeDisp, TargetFPSDisplay: targetFPSDisp,
-		ActualFPSDisplay: actualFPSDisp, UpdateCadence: 20.0 * time.Millisecond}
+		LastDrawTimeDisplay: lastDrawTimeDisp, TargetGPSDisplay: targetGPSDisp,
+		ActualGPSDisplay: actualGPSDisp, UpdateCadence: 20.0 * time.Millisecond}
 
 	statBar.bar = container.New(layout.NewVBoxLayout(),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
@@ -48,8 +48,8 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 			layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
 			layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
-			layout.NewSpacer(), widget.NewLabel("Target FPS:"), statBar.TargetFPSDisplay,
-			widget.NewLabel("Actual FPS:"), statBar.ActualFPSDisplay))
+			layout.NewSpacer(), widget.NewLabel("Target GPS:"), statBar.TargetGPSDisplay,
+			widget.NewLabel("Actual GPS:"), statBar.ActualGPSDisplay))
 
 	statBar.ExtendBaseWidget(statBar)
 
@@ -74,8 +74,8 @@ func (statBar *StatusBar) Update() {
 	statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastStepTime))
 	statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastDrawTime))
 	targetUpdateCadence := time.Duration(math.Pow(10.0, statBar.control.speedSlider.Value)) * time.Millisecond
-	statBar.TargetFPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/targetUpdateCadence.Seconds()))
-	statBar.ActualFPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/statBar.control.updateCadence.Seconds()))
+	statBar.TargetGPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/targetUpdateCadence.Seconds()))
+	statBar.ActualGPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/statBar.control.updateCadence.Seconds()))
 }
 
 func (statBar *StatusBar) Refresh() {
