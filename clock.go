@@ -46,20 +46,20 @@ func (clk *LifeSimClock) LifeTick() {
 // which should help when complex simlutations are not in front.
 
 type DisplayUpdateClock struct {
-	DisplayUpdateCadence time.Duration
-	Running              bool
-	tabs                 *LifeTabs
+	DisplayUpdateHz int
+	Running         bool
+	tabs            *LifeTabs
 }
 
 func StartDisplayUpdateClock(t *LifeTabs) *DisplayUpdateClock {
-	duc := &DisplayUpdateClock{time.Second / 60, true, t}
+	duc := &DisplayUpdateClock{Config.DisplayRefreshRate(), true, t}
 	go duc.doDisplayRedraws()
 	return duc
 }
 
 func (clk *DisplayUpdateClock) doDisplayRedraws() {
 	for clk.Running {
-		time.Sleep(clk.DisplayUpdateCadence)
+		time.Sleep(time.Second / time.Duration(clk.DisplayUpdateHz))
 		lc := clk.tabs.CurrentLifeContainer()
 		if lc != nil {
 			lc.Sim.Draw() // the Draw routine checks/clears the Dirty flag

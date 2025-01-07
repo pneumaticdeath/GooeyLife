@@ -14,13 +14,14 @@ import (
 )
 
 const (
-	gameHistorySizeKey   = "io.patenaude.gooeylife.history_size"
-	autoZoomDefaultKey   = "io.patenaude.gooeylife.auto_zoom_default"
-	lastUsedDirectoryKey = "io.patenaude.gooeylife.last_dir_url"
-	pausedCellColorKey   = "io.patenaude.gooeylife.paused_color"
-	runningCellColorKey  = "io.patenaude.gooeylife.running_color"
-	editCellColorKey     = "io.patenaude.gooeyLife.edit_color"
-	defaultHistorySize   = 10
+	gameHistorySizeKey    = "io.patenaude.gooeylife.history_size"
+	autoZoomDefaultKey    = "io.patenaude.gooeylife.auto_zoom_default"
+	displayRefreshRateKey = "io.patenaude.gooeylife.display_refresh_rate"
+	lastUsedDirectoryKey  = "io.patenaude.gooeylife.last_dir_url"
+	pausedCellColorKey    = "io.patenaude.gooeylife.paused_color"
+	runningCellColorKey   = "io.patenaude.gooeylife.running_color"
+	editCellColorKey      = "io.patenaude.gooeyLife.edit_color"
+	defaultHistorySize    = 10
 )
 
 var (
@@ -53,6 +54,14 @@ func (c ConfigT) AutoZoomDefault() bool {
 
 func (c ConfigT) SetAutoZoomDefault(value bool) {
 	c.app.Preferences().SetBool(autoZoomDefaultKey, value)
+}
+
+func (c ConfigT) DisplayRefreshRate() int {
+	return c.app.Preferences().IntWithFallback(displayRefreshRateKey, 60)
+}
+
+func (c ConfigT) SetDisplayRefreshRate(rate int) {
+	c.app.Preferences().SetInt(displayRefreshRateKey, rate)
 }
 
 func (c ConfigT) PausedCellColor() color.Color {
@@ -95,13 +104,19 @@ func (c ConfigT) setColor(key string, clr color.Color) {
 	c.app.Preferences().SetIntList(key, attr)
 }
 
-func (c ConfigT) ShowPreferencesDialog() {
+func (c ConfigT) ShowPreferencesDialog(clk *DisplayUpdateClock) {
 
 	historySizeEntry := widget.NewEntry()
 	historySizeEntry.Validator = validation.NewRegexp(`^\d+$`, "non-negative integers only")
 	historySizeEntry.SetText(fmt.Sprintf("%d", c.HistorySize()))
 	autoZoomDefaultCheck := widget.NewCheck("Auto Zoom by default", func(_ bool) {})
 	autoZoomDefaultCheck.SetChecked(c.AutoZoomDefault())
+	displayRefreshRateSelector := widget.NewSelect([]string{"30Hz", "60Hz"}, func(_ string) {})
+	if clk.DisplayUpdateHz == 60 {
+		displayRefreshRateSelector.SetSelectedIndex(1)
+	} else {
+		displayRefreshRateSelector.SetSelectedIndex(0)
+	}
 	pausedColorPickerButton := widget.NewButtonWithIcon("Paused cells", theme.ColorPaletteIcon(), func() {
 		picker := dialog.NewColorPicker("Paused Cell Color", "", func(clr color.Color) {
 			c.SetPausedCellColor(clr)
@@ -132,6 +147,7 @@ func (c ConfigT) ShowPreferencesDialog() {
 	entries := []*widget.FormItem{
 		widget.NewFormItem("Saved Generations", historySizeEntry),
 		widget.NewFormItem("Auto-zoom enabled by default", autoZoomDefaultCheck),
+		widget.NewFormItem("Diplay refresh rate", displayRefreshRateSelector),
 		widget.NewFormItem("Paused Cell Color", pausedColorPickerButton),
 		widget.NewFormItem("Running Cell Color", runningColorPickerButton),
 		widget.NewFormItem("Editing Cell Color", editColorPickerButton)}
@@ -145,6 +161,12 @@ func (c ConfigT) ShowPreferencesDialog() {
 				c.SetHistorySize(historySize)
 			}
 			c.SetAutoZoomDefault(autoZoomDefaultCheck.Checked)
+			if displayRefreshRateSelector.SelectedIndex() == 0 {
+				c.SetDisplayRefreshRate(30)
+			} else {
+				c.SetDisplayRefreshRate(60)
+			}
+			clk.DisplayUpdateHz = c.DisplayRefreshRate()
 		}
 	}, mainWindow)
 }
