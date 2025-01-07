@@ -84,8 +84,14 @@ func main() {
 
 	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
 		if len(tabs.DocTabs.Items) == 0 {
+			displayClock.Running = false
 			myApp.Quit()
 		} else {
+			obj := ti.Content
+			oldLC, ok := obj.(*LifeContainer)
+			if ok {
+				oldLC.Control.Clock.Running = false
+			}
 			tabs.Refresh()
 			currentLC = tabs.CurrentLifeContainer()
 		}
@@ -165,6 +171,7 @@ func main() {
 	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
 		if len(tabs.DocTabs.Items) == 0 {
+			displayClock.Running = false
 			myApp.Quit()
 		} else {
 			tabs.Refresh()

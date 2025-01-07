@@ -40,7 +40,13 @@ func (lt *LifeTabs) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (lt *LifeTabs) CurrentLifeContainer() *LifeContainer {
+	if lt == nil || lt.DocTabs == nil {
+		return nil
+	}
 	co := lt.DocTabs.Selected().Content
+	if co == nil {
+		return nil
+	}
 	lc, ok := co.(*LifeContainer)
 	if !ok {
 		// Not sure how this might happen, but perhaps a race

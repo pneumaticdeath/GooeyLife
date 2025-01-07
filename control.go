@@ -28,7 +28,7 @@ import (
 type ControlBar struct {
 	widget.BaseWidget
 	life               *LifeSim
-	clk                *LifeSimClock
+	Clock              *LifeSimClock
 	lastUpdateTime     time.Time
 	updateCadence      time.Duration
 	backwardStepButton *widget.Button
@@ -53,7 +53,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	controlBar := &ControlBar{}
 	controlBar.life = sim
 
-	controlBar.clk = NewLifeSimClock(sim)
+	controlBar.Clock = NewLifeSimClock(sim)
 
 	controlBar.lastUpdateTime = time.Now()
 	controlBar.updateCadence = 100 * time.Millisecond
@@ -197,7 +197,7 @@ func (controlBar *ControlBar) StepForward() {
 	controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 	controlBar.updateCadence = time.Since(controlBar.lastUpdateTime)
 	controlBar.lastUpdateTime = time.Now()
-	controlBar.clk.LifeTick()
+	controlBar.Clock.LifeTick()
 	if len(controlBar.life.Game.History) > 0 {
 		controlBar.backwardStepButton.Enable() // We might have history now
 	}

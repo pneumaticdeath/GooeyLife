@@ -59,10 +59,12 @@ func StartDisplayUpdateClock(t *LifeTabs) *DisplayUpdateClock {
 
 func (clk *DisplayUpdateClock) doDisplayRedraws() {
 	for clk.Running {
-		time.Sleep(time.Second / time.Duration(clk.DisplayUpdateHz))
 		lc := clk.tabs.CurrentLifeContainer()
 		if lc != nil {
 			lc.Sim.Draw() // the Draw routine checks/clears the Dirty flag
 		}
+		// This is last because the check for Running needs to happen immediately
+		// after the sleep ends.
+		time.Sleep(time.Second / time.Duration(clk.DisplayUpdateHz))
 	}
 }
