@@ -95,8 +95,8 @@ look like:
             AA
 ```
 
-I typed this in my hand from a web illustration, and used `A` and
-`B` to label what I thought were interesting structures.
+I painstakingly typed this in my hand from a web illustration, and used `A`
+and `B` to label what I thought were interesting structures.
 
 This was all before I found that there are a [wealth
 of interesting patterns on the web](Loading.md).
