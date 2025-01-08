@@ -71,8 +71,8 @@ func (statBar *StatusBar) Update() {
 	statBar.GenerationDisplay.SetText(fmt.Sprintf("%d", statBar.life.Game.Generation))
 	statBar.CellCountDisplay.SetText(fmt.Sprintf("%d", len(statBar.life.Game.Population)))
 	statBar.ScaleDisplay.SetText(fmt.Sprintf("%.3f", statBar.life.Scale))
-	statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastStepTime))
-	statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%v", statBar.life.LastDrawTime))
+	statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%7v", statBar.life.LastStepTime))
+	statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%7v", statBar.life.LastDrawTime))
 	targetUpdateCadence := time.Duration(math.Pow(10.0, statBar.control.speedSlider.Value)) * time.Millisecond
 	statBar.TargetGPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/targetUpdateCadence.Seconds()))
 	statBar.ActualGPSDisplay.SetText(fmt.Sprintf("%.1f", 1.0/statBar.control.updateCadence.Seconds()))

@@ -219,7 +219,7 @@ func main() {
 	fileSettingsMenuItem := fyne.NewMenuItem("Settings", func() {
 		Config.ShowPreferencesDialog(displayClock)
 	})
-	fileSettingsMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyComma, Modifier: modKey}
+	fileSettingsMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeySemicolon, Modifier: modKey}
 
 	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
 		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem, fileSettingsMenuItem,
