@@ -70,6 +70,6 @@ Note: While it's possible to calculate 300 generations/second on simple patterns
 limited to 60hz by default because of limitations with the graphics framework.  Also, while you can ask
 the system to calculate >300 generations/second, most complex patterns will max out available processor
 power at much slower speeds.  Check out the **Target GPS** and **Actual GPS** display in the lower right
-if you wnat statistics.
+if you want statistics.
 
 Now let's explore more of the [Examples](Examples.md)
