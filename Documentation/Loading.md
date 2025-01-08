@@ -19,7 +19,7 @@ The best web resources I know of (feel free to email me with more):
     and [Guns](https://conwaylife.com/wiki/Category:Guns) to explore.
 * [Dean Hickerson's Page](https://conwaylife.com/ref/DRH/life.html)
     This is the collection of Dean Hickerson, who created the 
-    original _Primer_ prime number sieve.  He as a number of links
+    original _Primer_ prime number sieve.  He has a number of links
     (mostly his own work) of various patterns that do interesting
     things.
 
