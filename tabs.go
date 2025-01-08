@@ -43,7 +43,11 @@ func (lt *LifeTabs) CurrentLifeContainer() *LifeContainer {
 	if lt == nil || lt.DocTabs == nil {
 		return nil
 	}
-	co := lt.DocTabs.Selected().Content
+	ti := lt.DocTabs.Selected()
+	if ti == nil {
+		return nil
+	}
+	co := ti.Content
 	if co == nil {
 		return nil
 	}
