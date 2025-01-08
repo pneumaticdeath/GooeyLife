@@ -13,7 +13,7 @@ it will balloon the amount of memory that the program uses considerably.
 
 Try this pattern:
 
-![R Pentomino](images/R-Pentomino.md)
+![R Pentomino](images/R-Pentomino.png)
 
 It's only got 5 cells, but will run for over 1000 generations (and 
 spit out 5 _gliders_) before stagnating. This is sometimes called
