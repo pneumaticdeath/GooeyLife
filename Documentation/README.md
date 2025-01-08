@@ -10,8 +10,6 @@ turn out, thanks to a famous principal of computer science called the
 
 * [Getting Started](Getting_Started.md)
 * [Tour of the Progam](Tour.md)
-* [The Controls](Controls.md)
-* [The Playfield](Playfield.md)
 * [Examples](Examples.md)
 * [Creating your own](Creating.md)
 * [Loading examples from the web](Loading.md)
