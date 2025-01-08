@@ -86,7 +86,8 @@ func main() {
 	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
 		if len(tabs.DocTabs.Items) == 0 {
 			displayClock.Running = false
-			time.Sleep(50*time.Millisecond)
+			// allow the displayClock thread to gracefully exit before we call Quit()
+			time.Sleep(50 * time.Millisecond)
 			myApp.Quit()
 		} else {
 			obj := ti.Content
@@ -174,7 +175,8 @@ func main() {
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
 		if len(tabs.DocTabs.Items) == 0 {
 			displayClock.Running = false
-			time.Sleep(50*time.Millisecond)
+			// allow the displayClock thread to gracefully exit before we call Quit()
+			time.Sleep(50 * time.Millisecond)
 			myApp.Quit()
 		} else {
 			tabs.Refresh()
