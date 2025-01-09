@@ -9,7 +9,7 @@
 *.dylib
 *.zip
 GooeyLife
-GooeyLife.*
+GooeyLife*
 .DS_Store
 
 # Test binary, built with `go test -c`
