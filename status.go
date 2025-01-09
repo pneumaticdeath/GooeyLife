@@ -46,7 +46,7 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 
 	statBar.bar = container.New(layout.NewVBoxLayout(),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
-			layout.NewSpacer(), widget.NewLabel("Available history"), statBar.HistorySizeDisplay, layout.NewSpacer(), 
+			layout.NewSpacer(), widget.NewLabel("Available history"), statBar.HistorySizeDisplay, layout.NewSpacer(),
 			widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
 			layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
