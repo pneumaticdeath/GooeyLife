@@ -20,6 +20,7 @@ type StatusBar struct {
 	control             *ControlBar
 	GenerationDisplay   *widget.Label
 	CellCountDisplay    *widget.Label
+	HistorySizeDisplay  *widget.Label
 	ScaleDisplay        *widget.Label
 	LastStepTimeDisplay *widget.Label
 	LastDrawTimeDisplay *widget.Label
@@ -32,19 +33,21 @@ type StatusBar struct {
 func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 	genDisp := widget.NewLabel("")
 	cellCountDisp := widget.NewLabel("")
+	histSizeDisp := widget.NewLabel("")
 	scaleDisp := widget.NewLabel("")
 	lastStepTimeDisp := widget.NewLabel("")
 	lastDrawTimeDisp := widget.NewLabel("")
 	targetGPSDisp := widget.NewLabel("")
 	actualGPSDisp := widget.NewLabel("")
 	statBar := &StatusBar{life: sim, control: cb, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
-		ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
+		HistorySizeDisplay: histSizeDisp, ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
 		LastDrawTimeDisplay: lastDrawTimeDisp, TargetGPSDisplay: targetGPSDisp,
 		ActualGPSDisplay: actualGPSDisp, UpdateCadence: 20.0 * time.Millisecond}
 
 	statBar.bar = container.New(layout.NewVBoxLayout(),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
-			layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
+			layout.NewSpacer(), widget.NewLabel("Available history"), statBar.HistorySizeDisplay, layout.NewSpacer(), 
+			widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
 			layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
 		container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
 			layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
@@ -70,6 +73,7 @@ func (statBar *StatusBar) CreateRenderer() fyne.WidgetRenderer {
 func (statBar *StatusBar) Update() {
 	statBar.GenerationDisplay.SetText(fmt.Sprintf("%d", statBar.life.Game.Generation))
 	statBar.CellCountDisplay.SetText(fmt.Sprintf("%d", len(statBar.life.Game.Population)))
+	statBar.HistorySizeDisplay.SetText(fmt.Sprintf("%d of %d", len(statBar.life.Game.History), statBar.life.Game.HistorySize))
 	statBar.ScaleDisplay.SetText(fmt.Sprintf("%.3f", statBar.life.Scale))
 	statBar.LastStepTimeDisplay.SetText(fmt.Sprintf("%7v", statBar.life.LastStepTime))
 	statBar.LastDrawTimeDisplay.SetText(fmt.Sprintf("%7v", statBar.life.LastDrawTime))

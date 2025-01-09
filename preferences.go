@@ -104,7 +104,7 @@ func (c ConfigT) setColor(key string, clr color.Color) {
 	c.app.Preferences().SetIntList(key, attr)
 }
 
-func (c ConfigT) ShowPreferencesDialog(clk *DisplayUpdateClock) {
+func (c ConfigT) ShowPreferencesDialog(tabs *LifeTabs, clk *DisplayUpdateClock) {
 
 	historySizeEntry := widget.NewEntry()
 	historySizeEntry.Validator = validation.NewRegexp(`^\d+$`, "non-negative integers only")
@@ -158,7 +158,14 @@ func (c ConfigT) ShowPreferencesDialog(clk *DisplayUpdateClock) {
 			if err != nil {
 				fmt.Println("Prefernces let through a bad value: ", historySizeEntry.Text, err)
 			} else {
-				c.SetHistorySize(historySize)
+				if historySize != c.HistorySize() {
+					// update all existing games
+					for _, lc := range tabs.GetLifeContainters() {
+						lc.Sim.Game.SetHistorySize(historySize)
+					}
+					// persist the new value
+					c.SetHistorySize(historySize)
+				}
 			}
 			c.SetAutoZoomDefault(autoZoomDefaultCheck.Checked)
 			if displayRefreshRateSelector.SelectedIndex() == 0 {

@@ -61,6 +61,21 @@ func (lt *LifeTabs) CurrentLifeContainer() *LifeContainer {
 	return lc
 }
 
+func (lt *LifeTabs) GetLifeContainters() []*LifeContainer {
+	items := lt.DocTabs.Items
+
+	containers := make([]*LifeContainer, 0, len(items))
+	for _, item := range items {
+		lc, ok := item.Content.(*LifeContainer)
+		if ok {
+			containers = append(containers, lc)
+		} else {
+			fmt.Println("Unable to coerce tab item content into LifeContainer")
+		}
+	}
+	return containers
+}
+
 func (lt *LifeTabs) NewTab(lc *LifeContainer) {
 	title := "Blank Game"
 	if lc.Sim.Game.Filename != "" {
