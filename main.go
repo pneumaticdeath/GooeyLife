@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
-	_ "embed"
 	"errors"
+	"fmt"
 	"os"
 	"runtime"
 	"time"
@@ -26,9 +25,6 @@ const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
 )
-
-//go:embed Icon.png
-var iconPNGData []byte
 
 func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuItem {
 	exList := examples.ListExamples()
@@ -59,8 +55,7 @@ func main() {
 	InitConfig(myApp)
 	mainWindow = myApp.NewWindow("Conway's Game of Life")
 
-	pngReader := bytes.NewReader(iconPNGData)
-	GooeyLifeIconImage := canvas.NewImageFromReader(pngReader, "Icon.png")
+	GooeyLifeIconImage := canvas.NewImageFromResource(myApp.Metadata().Icon)
 	GooeyLifeIconImage.SetMinSize(fyne.NewSize(128, 128))
 	GooeyLifeIconImage.FillMode = canvas.ImageFillContain
 
@@ -211,7 +206,8 @@ func main() {
 
 	fileAboutMenuItem := fyne.NewMenuItem("About", func() {
 		aboutContent := container.New(layout.NewVBoxLayout(), GooeyLifeIconImage,
-			widget.NewLabel("GooeyLife"), widget.NewLabel("Copyright 2024,2025"),
+			widget.NewLabel(myApp.Metadata().Name), widget.NewLabel("Copyright 2024,2025"),
+			widget.NewLabel(fmt.Sprintf("Version %s (build %d)", myApp.Metadata().Version, myApp.Metadata().Build)),
 			widget.NewLabel("by Mitch Patenaude"),
 			widget.NewLabel("Examples copyright of their respective discoverers"))
 		aboutDialog := dialog.NewCustom("About GooeyLife", "ok", aboutContent, mainWindow)
