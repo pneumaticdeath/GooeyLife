@@ -138,6 +138,12 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 	}
 }
 
+func (ls *LifeSim) Scrolled(se *fyne.ScrollEvent) {
+	// I'm going to treat this as equivalent to a Dragged event
+	de := &fyne.DragEvent{PointEvent: se.PointEvent, Dragged: se.Scrolled}
+	ls.Dragged(de)
+}
+
 func (ls *LifeSim) GetGameInfo() (string, string) {
 	var title string = "Blank Game"
 	if ls.Game.Filename != "" {
