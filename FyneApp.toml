@@ -5,4 +5,10 @@ Website = "https://patenaude.io/"
   Name = "GooeyLife"
   ID = "io.patenaude.gooeylife"
   Version = "0.1.5"
-  Build = 20
+  Build = 22
+
+[LinuxAndBSD]
+  GenericName = "Game of Life"
+  Categories = ["Games"]
+  Comment = "Run simulations of Conway's Game of Life"
+  Keywords = ["life", "game"]
