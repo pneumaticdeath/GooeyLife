@@ -52,7 +52,7 @@ Just like the icon of the program if you switch to "Circle" shapes. It's a  dece
 but it turns out to be one of the most important patterns around.  Click **Run** again, and you'll
 notice it starts to walk or _glide_ off toward the lower right side of the screen. You can use the
 **Edit Mode** to add a blinker of block to prove that it's moving.  You can also turn off **Auto-Zoom**
-and watch it walk right off the screen. 
+and watch it walk right off the screen.
 
 While it's no longer visible, it's still there. The grid on which the cells live is effectively infinite.
 (Actually 2^64 by 2^64 is the limit, but that's almost impossible to reach.)
