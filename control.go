@@ -125,7 +125,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	controlBar.speedSlider.Step = (3.0 - 0.5) / 12
 
 	fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
-	controlBar.bar = container.New(layout.NewGridLayout(2),
+	controlBar.bar = container.New(layout.NewAdaptiveGridLayout(2),
 		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
 			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.autoZoomCheckBox,
 			controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector, controlBar.editCheckBox),
