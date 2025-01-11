@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
 	"time"
@@ -25,6 +26,37 @@ const (
 	zoomFactor  = 1.1
 	shiftFactor = 0.2
 )
+
+type HelpPage struct {
+	Title  string
+	URLstr string
+}
+
+var HelpPages []HelpPage = []HelpPage{
+	{"Getting Started", "https://github.com/pneumaticdeath/GooeyLife/wiki/Getting_Started"},
+	{"Tour", "https://github.com/pneumaticdeath/GooeyLife/wiki/Tour"},
+	{"Examples", "https://github.com/pneumaticdeath/GooeyLife/wiki/Examples"},
+	{"Creating your own", "https://github.com/pneumaticdeath/GooeyLife/wiki/Creating"},
+	{"Loading from the web", "https://github.com/pneumaticdeath/GooeyLife/wiki/Loading"},
+	{"Reporting bugs", "https://github.com/pneumaticdeath/GooeyLife/wiki/Bugs"},
+}
+
+func BuildHelpMenuItems(app fyne.App) []*fyne.MenuItem {
+	items := make([]*fyne.MenuItem, 0, len(HelpPages))
+	for _, page := range HelpPages {
+		url, err := url.Parse(page.URLstr)
+		if err != nil {
+			fyne.LogError("Unable to parse help url ", err)
+		} else {
+			mi := fyne.NewMenuItem(page.Title, func() {
+				app.OpenURL(url)
+			})
+			items = append(items, mi)
+		}
+	}
+
+	return items
+}
 
 func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuItem {
 	exList := examples.ListExamples()
@@ -252,7 +284,9 @@ func main() {
 	examplesMenu := fyne.NewMenu("Examples", BuildExampleMenuItems(exampleLoader)...)
 	examplesMenu.Items = append(examplesMenu.Items, fyne.NewMenuItemSeparator(), allExamplesMI)
 
-	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu)
+	helpMenu := fyne.NewMenu("Help", BuildHelpMenuItems(myApp)...)
+
+	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu, helpMenu)
 
 	mainWindow.SetMainMenu(mainMenu)
 
