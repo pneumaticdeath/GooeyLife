@@ -44,15 +44,23 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 		LastDrawTimeDisplay: lastDrawTimeDisp, TargetGPSDisplay: targetGPSDisp,
 		ActualGPSDisplay: actualGPSDisp, UpdateCadence: 20.0 * time.Millisecond}
 
-	statBar.bar = container.New(layout.NewVBoxLayout(),
-		container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
-			layout.NewSpacer(), widget.NewLabel("Available history"), statBar.HistorySizeDisplay, layout.NewSpacer(),
-			widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
-			layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
-		container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
-			layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
-			layout.NewSpacer(), widget.NewLabel("Target GPS:"), statBar.TargetGPSDisplay,
-			widget.NewLabel("Actual GPS:"), statBar.ActualGPSDisplay))
+	if fyne.CurrentDevice().IsMobile() {
+		statBar.bar = container.New(layout.NewVBoxLayout(),
+			container.New(layout.NewHBoxLayout(), widget.NewLabel("Gen:"), statBar.GenerationDisplay,
+				layout.NewSpacer(), widget.NewLabel("Cells:"), statBar.CellCountDisplay),
+			container.New(layout.NewHBoxLayout(), widget.NewLabel("Target GPS:"), statBar.TargetGPSDisplay,
+				layout.NewSpacer(), widget.NewLabel("Actual GPS:"), statBar.ActualGPSDisplay))
+	} else {
+		statBar.bar = container.New(layout.NewVBoxLayout(),
+			container.New(layout.NewHBoxLayout(), widget.NewLabel("Generation:"), statBar.GenerationDisplay,
+				layout.NewSpacer(), widget.NewLabel("Available history"), statBar.HistorySizeDisplay,
+				layout.NewSpacer(), widget.NewLabel("Live Cells:"), statBar.CellCountDisplay,
+				layout.NewSpacer(), widget.NewLabel("Scale:"), statBar.ScaleDisplay),
+			container.New(layout.NewHBoxLayout(), widget.NewLabel("Last step time:"), statBar.LastStepTimeDisplay,
+				layout.NewSpacer(), widget.NewLabel("Last draw time:"), statBar.LastDrawTimeDisplay,
+				layout.NewSpacer(), widget.NewLabel("Target GPS:"), statBar.TargetGPSDisplay,
+				widget.NewLabel("Actual GPS:"), statBar.ActualGPSDisplay))
+	}
 
 	statBar.ExtendBaseWidget(statBar)
 
