@@ -21,6 +21,7 @@ const (
 	pausedCellColorKey    = "io.patenaude.gooeylife.paused_color"
 	runningCellColorKey   = "io.patenaude.gooeylife.running_color"
 	editCellColorKey      = "io.patenaude.gooeyLife.edit_color"
+	backgroundColorKey    = "io.patenaude.gooeyLife.background_color"
 	defaultHistorySize    = 10
 )
 
@@ -28,6 +29,7 @@ var (
 	defaultPausedColor  color.Color = color.NRGBA{R: 0, G: 0, B: 255, A: 255}
 	defaultRunningColor color.Color = color.NRGBA{R: 0, G: 255, B: 0, A: 255}
 	defaultEditColor    color.Color = color.NRGBA{R: 255, G: 255, B: 0, A: 255}
+	defaultBGColor      color.Color = color.NRGBA{R: 0, G: 0, B: 0, A: 255}
 )
 
 type ConfigT struct {
@@ -88,6 +90,14 @@ func (c ConfigT) SetEditCellColor(clr color.Color) {
 	c.setColor(editCellColorKey, clr)
 }
 
+func (c ConfigT) BackgroundColor() color.Color {
+	return c.fetchColor(backgroundColorKey, defaultBGColor)
+}
+
+func (c ConfigT) SetBackgroundColor(clr color.Color) {
+	c.setColor(backgroundColorKey, clr)
+}
+
 func (c ConfigT) fetchColor(key string, def color.Color) color.Color {
 	attr := c.app.Preferences().IntListWithFallback(key, make([]int, 0))
 	if len(attr) != 4 {
@@ -144,13 +154,23 @@ func (c ConfigT) ShowPreferencesDialog(tabs *LifeTabs, clk *DisplayUpdateClock) 
 		picker.SetColor(c.EditCellColor())
 		picker.Show()
 	})
+	backgroundColorPickerButton := widget.NewButtonWithIcon("Background", theme.ColorPaletteIcon(), func() {
+		picker := dialog.NewColorPicker("Background Color", "", func(clr color.Color) {
+			c.SetBackgroundColor(clr)
+			mainWindow.Canvas().Content().Refresh()
+		}, mainWindow)
+		picker.Advanced = true
+		picker.SetColor(c.BackgroundColor())
+		picker.Show()
+	})
 	entries := []*widget.FormItem{
 		widget.NewFormItem("Saved Generations", historySizeEntry),
 		widget.NewFormItem("Auto-zoom enabled by default", autoZoomDefaultCheck),
 		widget.NewFormItem("Diplay refresh rate", displayRefreshRateSelector),
 		widget.NewFormItem("Paused Cell Color", pausedColorPickerButton),
 		widget.NewFormItem("Running Cell Color", runningColorPickerButton),
-		widget.NewFormItem("Editing Cell Color", editColorPickerButton)}
+		widget.NewFormItem("Editing Cell Color", editColorPickerButton),
+		widget.NewFormItem("Background Color", backgroundColorPickerButton)}
 
 	dialog.ShowForm("Preferences", "Save", "Cancel", entries, func(save bool) {
 		if save {

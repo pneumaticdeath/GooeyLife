@@ -39,7 +39,6 @@ type LifeSim struct {
 	State                        int             // State the game is in.
 	useAlphaDensity              bool            // whether to use alpha to adjust color for aggregate pixels
 	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
-	BackgroundColor              color.Color     // Should probably be derived from the theme
 	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
 	EditMode                     binding.Bool    // Whether the sim is in editable mode
 	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
@@ -61,7 +60,6 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.State = simPaused
 	sim.useAlphaDensity = false
 	sim.GlyphStyle = "RoundedRectangle"
-	sim.BackgroundColor = color.Black
 	sim.autoZoom = binding.NewBool()
 	sim.autoZoom.Set(Config.AutoZoomDefault())
 	sim.autoZoom.AddListener(binding.NewDataListener(func() { sim.Draw() }))
@@ -226,7 +224,7 @@ func (ls *LifeSim) Draw() {
 
 	windowCenter := fyne.NewPos(windowSize.Width/2.0, windowSize.Height/2.0)
 
-	background := canvas.NewRectangle(ls.BackgroundColor)
+	background := canvas.NewRectangle(Config.BackgroundColor())
 	background.Resize(windowSize)
 	background.Move(fyne.NewPos(0, 0))
 
