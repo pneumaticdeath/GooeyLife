@@ -92,6 +92,13 @@ func main() {
 
 	var currentLC *LifeContainer
 
+	var modKey fyne.KeyModifier
+	if runtime.GOOS == "darwin" {
+		modKey = fyne.KeyModifierSuper
+	} else {
+		modKey = fyne.KeyModifierControl
+	}
+
 	updateSimMenu := func() { /* to be filled in later */ }
 
 	simEditCheckMI := fyne.NewMenuItem("Edit Mode", func() {
@@ -100,6 +107,7 @@ func main() {
 			updateSimMenu()
 		}
 	})
+	simEditCheckMI.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyE, Modifier: modKey}
 
 	simAutoZoomCheckMI := fyne.NewMenuItem("Auto Zoom", func() {
 		if currentLC != nil {
@@ -107,12 +115,14 @@ func main() {
 			updateSimMenu()
 		}
 	})
+	simAutoZoomCheckMI.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyA, Modifier: modKey}
 
 	simZoomFitMI := fyne.NewMenuItem("Zoom To Fit", func() {
 		if currentLC != nil {
 			currentLC.Sim.ResizeToFit()
 		}
 	})
+	simZoomFitMI.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyF, Modifier: modKey}
 
 	updateSimMenu = func() {
 		if currentLC != nil {
@@ -192,13 +202,6 @@ func main() {
 			Config.SetLastUsedDirURI(writer.URI())
 			writer.Close()
 		}
-	}
-
-	var modKey fyne.KeyModifier
-	if runtime.GOOS == "darwin" {
-		modKey = fyne.KeyModifierSuper
-	} else {
-		modKey = fyne.KeyModifierControl
 	}
 
 	newTabMenuItem := fyne.NewMenuItem("New Tab", func() {
