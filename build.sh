@@ -29,5 +29,3 @@ do
 	cp GooeyLife.tar.xz ../../packages/GooeyLife_$(basename ${dir} | sed -e 's/-/_/').tar.xz
 	popd
 done
-
-cat linux_block.toml >> FyneApp.toml

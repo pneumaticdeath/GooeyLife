@@ -1,6 +1,0 @@
-
-[LinuxAndBSD]
-  GenericName = "Game of Life"
-  Categories = ["Game"]
-  Comment = "Run simulations of Conway's Game of Life"
-  Keywords = ["life", "game"]

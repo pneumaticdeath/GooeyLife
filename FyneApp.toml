@@ -5,7 +5,7 @@ Website = "https://patenaude.io/"
   Name = "GooeyLife"
   ID = "io.patenaude.gooeylife"
   Version = "0.1.6"
-  Build = 32
+  Build = 36
 
 [LinuxAndBSD]
   GenericName = "Game of Life"
