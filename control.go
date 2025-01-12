@@ -19,11 +19,12 @@ import (
 // of the animaiton and manipulation of the
 // running simulation.  It allows the user to
 // step the game forward (to the next generation
-// of cells), backward (if the hisotry has any
+// of cells), backward (if the history has any
 // previous generations), or to run automatically
 // at a given speed.  Some functions (like the
 // zoom functions) have to be passed down to the
-// LifeSim object that encapsulates the game.
+// LifeSim object that encapsulates the game display
+// logic.
 
 type ControlBar struct {
 	widget.BaseWidget
@@ -35,11 +36,8 @@ type ControlBar struct {
 	runStopButton      *widget.Button
 	forwardStepButton  *widget.Button
 	zoomOutButton      *widget.Button
-	autoZoomCheckBox   *widget.Check
-	zoomFitButton      *widget.Button
 	zoomInButton       *widget.Button
 	glyphSelector      *widget.Select
-	editCheckBox       *widget.Check
 	speedSlider        *widget.Slider
 	bar                *fyne.Container
 	running            bool
@@ -65,7 +63,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 		controlBar.backwardStepButton.Disable()
 	}
 
-	controlBar.runStopButton = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
+	controlBar.runStopButton = widget.NewButtonWithIcon("", theme.MediaPlayIcon(), func() {
 		if controlBar.IsRunning() {
 			controlBar.StopSim()
 		} else {
@@ -83,18 +81,27 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 	controlBar.zoomOutButton = widget.NewButtonWithIcon("", theme.ZoomOutIcon(), func() { controlBar.ZoomOut() })
 
-	controlBar.autoZoomCheckBox = widget.NewCheckWithData("Auto Zoom", controlBar.life.autoZoom)
-
-	// controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
-
-	controlBar.zoomFitButton = widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() { controlBar.life.ResizeToFit(); controlBar.life.Dirty = true })
-
 	controlBar.zoomInButton = widget.NewButtonWithIcon("", theme.ZoomInIcon(), func() { controlBar.ZoomIn() })
 
-	controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle", "RoundedRectangle", "Circle"}, func(selection string) { controlBar.life.GlyphStyle = selection; controlBar.life.Dirty = true })
+	controlBar.glyphSelector = widget.NewSelect([]string{"Rectangle", "RoundedRectangle", "Circle"}, func(selection string) {
+		controlBar.life.GlyphStyle = selection
+		controlBar.life.Dirty = true
+	})
 	controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
 
-	controlBar.editCheckBox = widget.NewCheckWithData("Edit mode", controlBar.life.EditMode)
+	controlBar.speedSlider = widget.NewSlider(0.5, 3.0) // log_10 scale in milliseconds
+	controlBar.speedSlider.SetValue(2.0)                // default to 100ms clock tick time
+	controlBar.speedSlider.Step = 0.1
+
+	fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
+	controlBar.bar = container.New(layout.NewAdaptiveGridLayout(2),
+		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
+			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton, controlBar.glyphSelector),
+		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
+
+	// This is a bit of a hack... we want to stop the sim and prompt to zoom in
+	// when the edit mode is turned on, and we can only stop the sim in the control
+	// bar layer, not the LifeSim layer.
 	controlBar.life.EditMode.AddListener(binding.NewDataListener(func() {
 		if controlBar.life.IsEditable() {
 			controlBar.StopSim()
@@ -113,23 +120,13 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 				confirm.Show()
 			}
 			controlBar.life.State = simEditing
-			controlBar.life.Dirty = true
+		} else if controlBar.IsRunning() {
+			controlBar.life.State = simRunning
 		} else {
 			controlBar.life.State = simPaused
-			controlBar.life.Dirty = true
 		}
+		controlBar.life.Dirty = true
 	}))
-
-	controlBar.speedSlider = widget.NewSlider(0.5, 3.0) // log_10 scale in milliseconds
-	controlBar.speedSlider.SetValue(2.0)                // default to 100ms clock tick time
-	controlBar.speedSlider.Step = (3.0 - 0.5) / 12
-
-	fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
-	controlBar.bar = container.New(layout.NewAdaptiveGridLayout(2),
-		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
-			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.autoZoomCheckBox,
-			controlBar.zoomFitButton, controlBar.zoomInButton, controlBar.glyphSelector, controlBar.editCheckBox),
-		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
 	controlBar.ExtendBaseWidget(controlBar)
 	return controlBar
@@ -138,13 +135,13 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 func (controlBar *ControlBar) StopSim() {
 	if controlBar.IsRunning() {
 		controlBar.running = false
-		controlBar.setRunStopText("Run", theme.MediaPlayIcon())
+		controlBar.setRunStopIcon(theme.MediaPlayIcon())
 	}
 }
 
 func (controlBar *ControlBar) StartSim() {
 	if !controlBar.IsRunning() {
-		controlBar.setRunStopText("Pause", theme.MediaPauseIcon())
+		controlBar.setRunStopIcon(theme.MediaPauseIcon())
 		controlBar.running = true
 		go controlBar.RunGame()
 	}
@@ -154,7 +151,7 @@ func (controlBar *ControlBar) StartSim() {
 }
 
 func (controlBar *ControlBar) DisableAutoZoom() {
-	controlBar.autoZoomCheckBox.SetChecked(false)
+	// controlBar.autoZoomCheckBox.SetChecked(false)
 	controlBar.life.SetAutoZoom(false)
 }
 
@@ -170,9 +167,8 @@ func (controlBar *ControlBar) ZoomOut() {
 	controlBar.life.Dirty = true
 }
 
-func (controlBar *ControlBar) setRunStopText(label string, icon fyne.Resource) {
+func (controlBar *ControlBar) setRunStopIcon(icon fyne.Resource) {
 	controlBar.runStopButton.SetIcon(icon)
-	controlBar.runStopButton.SetText(label)
 }
 
 func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
@@ -194,7 +190,7 @@ func (controlBar *ControlBar) RunGame() {
 }
 
 func (controlBar *ControlBar) StepForward() {
-	controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
+	// controlBar.autoZoomCheckBox.SetChecked(controlBar.life.IsAutoZoom())
 	controlBar.updateCadence = time.Since(controlBar.lastUpdateTime)
 	controlBar.lastUpdateTime = time.Now()
 	controlBar.Clock.LifeTick()

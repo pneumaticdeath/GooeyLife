@@ -35,10 +35,10 @@ type LifeContainer struct {
 	Status *StatusBar
 }
 
-func NewLifeContainer() *LifeContainer {
+func NewLifeContainer(menuUpdateCallback func()) *LifeContainer {
 	lc := &LifeContainer{}
 
-	lc.Sim = NewLifeSim()
+	lc.Sim = NewLifeSim(menuUpdateCallback)
 	lc.Control = NewControlBar(lc.Sim)
 	lc.Status = NewStatusBar(lc.Sim, lc.Control)
 

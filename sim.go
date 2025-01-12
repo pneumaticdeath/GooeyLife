@@ -50,7 +50,7 @@ func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(ls.drawingSurface)
 }
 
-func NewLifeSim() *LifeSim {
+func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim := &LifeSim{}
 	sim.Game = golife.NewGame()
 	sim.Game.SetHistorySize(Config.HistorySize())
@@ -65,7 +65,9 @@ func NewLifeSim() *LifeSim {
 	sim.autoZoom = binding.NewBool()
 	sim.autoZoom.Set(Config.AutoZoomDefault())
 	sim.autoZoom.AddListener(binding.NewDataListener(func() { sim.Draw() }))
+	sim.autoZoom.AddListener(binding.NewDataListener(menuUpdateCallback))
 	sim.EditMode = binding.NewBool()
+	sim.EditMode.AddListener(binding.NewDataListener(menuUpdateCallback))
 	sim.EditMode.Set(false)
 	sim.ExtendBaseWidget(sim)
 	sim.Dirty = true
@@ -83,6 +85,10 @@ func (ls *LifeSim) SetAutoZoom(az bool) {
 func (ls *LifeSim) IsAutoZoom() bool {
 	az, _ := ls.autoZoom.Get()
 	return az
+}
+
+func (ls *LifeSim) SetEditMode(em bool) {
+	ls.EditMode.Set(em)
 }
 
 func (ls *LifeSim) IsEditable() bool {

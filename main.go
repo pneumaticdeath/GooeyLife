@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"runtime"
 	"time"
 
@@ -91,23 +90,46 @@ func main() {
 	GooeyLifeIconImage.SetMinSize(fyne.NewSize(128, 128))
 	GooeyLifeIconImage.FillMode = canvas.ImageFillContain
 
-	lc := NewLifeContainer()
+	var currentLC *LifeContainer
 
-	if len(os.Args) > 1 {
-		newGame, err := golife.Load(os.Args[1])
-		if err != nil {
-			dialog.ShowError(err, mainWindow)
-		} else {
-			lc.SetGame(newGame)
+	updateSimMenu := func() { /* to be filled in later */ }
+
+	simEditCheckMI := fyne.NewMenuItem("Edit Mode", func() {
+		if currentLC != nil {
+			currentLC.Sim.SetEditMode(!currentLC.Sim.IsEditable())
+			updateSimMenu()
+		}
+	})
+
+	simAutoZoomCheckMI := fyne.NewMenuItem("Auto Zoom", func() {
+		if currentLC != nil {
+			currentLC.Sim.SetAutoZoom(!currentLC.Sim.IsAutoZoom())
+			updateSimMenu()
+		}
+	})
+
+	simZoomFitMI := fyne.NewMenuItem("Zoom To Fit", func() {
+		if currentLC != nil {
+			currentLC.Sim.ResizeToFit()
+		}
+	})
+
+	updateSimMenu = func() {
+		if currentLC != nil {
+			simEditCheckMI.Checked = currentLC.Sim.IsEditable()
+			simAutoZoomCheckMI.Checked = currentLC.Sim.IsAutoZoom()
 		}
 	}
 
+	lc := NewLifeContainer(updateSimMenu)
+
 	tabs := NewLifeTabs(lc)
-	currentLC := tabs.CurrentLifeContainer()
+	currentLC = tabs.CurrentLifeContainer()
 	displayClock := StartDisplayUpdateClock(tabs)
 
 	tabs.DocTabs.OnSelected = func(ti *container.TabItem) {
 		currentLC = tabs.CurrentLifeContainer()
+		updateSimMenu()
 	}
 
 	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
@@ -122,22 +144,9 @@ func main() {
 			if ok {
 				oldLC.Control.Clock.Running = false
 			}
-			tabs.Refresh()
 			currentLC = tabs.CurrentLifeContainer()
-		}
-	}
-
-	if len(os.Args) > 2 {
-		remaining := os.Args[2:]
-		for index := range remaining {
-			newGame, err := golife.Load(remaining[index])
-			if err != nil {
-				dialog.ShowError(err, mainWindow)
-			} else {
-				nextlc := NewLifeContainer()
-				nextlc.SetGame(newGame)
-				tabs.NewTab(nextlc)
-			}
+			updateSimMenu()
+			tabs.Refresh()
 		}
 	}
 
@@ -193,7 +202,7 @@ func main() {
 	}
 
 	newTabMenuItem := fyne.NewMenuItem("New Tab", func() {
-		newlc := NewLifeContainer()
+		newlc := NewLifeContainer(updateSimMenu)
 		tabs.NewTab(newlc)
 	})
 	newTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyN, Modifier: modKey}
@@ -274,7 +283,7 @@ func main() {
 			remaining = games[1:]
 		}
 		for gameIndex := range remaining {
-			lc = NewLifeContainer()
+			lc = NewLifeContainer(updateSimMenu)
 			lc.SetGame(remaining[gameIndex])
 			tabs.NewTab(lc)
 		}
@@ -286,7 +295,11 @@ func main() {
 
 	helpMenu := fyne.NewMenu("Help", BuildHelpMenuItems(myApp)...)
 
-	mainMenu := fyne.NewMainMenu(fileMenu, examplesMenu, helpMenu)
+	updateSimMenu() // set initial state
+
+	simMenu := fyne.NewMenu("Sim", simAutoZoomCheckMI, simZoomFitMI, simEditCheckMI)
+
+	mainMenu := fyne.NewMainMenu(fileMenu, simMenu, examplesMenu, helpMenu)
 
 	mainWindow.SetMainMenu(mainMenu)
 
@@ -345,7 +358,7 @@ func main() {
 				remaining = games[1:]
 			}
 			for index := range remaining {
-				lc = NewLifeContainer()
+				lc = NewLifeContainer(updateSimMenu)
 				lc.SetGame(remaining[index])
 				tabs.NewTab(lc)
 			}
