@@ -3,23 +3,25 @@
 The screen looks like (on a mac)
 ![Mac Screen](images/Mac_Screen.png)
 or (on linux)
-![Linux Scrren](images/Linux_Screen.png)
+![Linux Screen](images/Linux_Screen.png)
 
 Things to notice.  The menus at the top
 
 ![Menus](images/Mac_Menus.png)
 
-and the control bar near the top of the window
+The important menus are **File**, **Sim**, and **Examples**.
+* **File** To load a save pattern files, control the displayed tabs, or get info about a loaded pattern.
+* **Sim** To control some aspects of the simulation and display
+* **Examples** To load some interesting example patterns. Careful, some can be quite large.
+
+The control bar near the top of the window
 
 ![Control Bar](images/Control_Bar.png)
-
-The important menus are **File** and **Examples**.
 
 The control bar has a number of buttons and widgets
 * On the left you can run the simulation or move the simulation forward (or backward) a single generation.
 * Next are a group of controls to allow you to zoom in on a large population of cells, but we'll leave those alone for now.
 * A drop down list that allows you to select the shape of cells (purely cosmetic)
-* A checkbox to enable *Edit Mode*
 * And a slider to allow you to control the speed of the simulation while running.
 
 Nothing will do much interesting at this point, because there are no living cells.  Let's change that.
