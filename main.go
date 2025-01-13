@@ -188,12 +188,6 @@ func main() {
 		} else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
 			dialog.ShowError(errors.New("File doesn't have proper extension"), mainWindow)
 			writer.Close()
-			/* // Don't actually delete for now
-			   delErr := storage.Delete(writer.URI())
-			   if delErr != nil {
-			       dialog.ShowError(delErr, mainWindow)
-			   }
-			*/
 		} else if writer != nil {
 			write_err := currentLC.Sim.Game.WriteRLE(writer)
 			if write_err != nil {
