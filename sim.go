@@ -389,4 +389,5 @@ func (ls *LifeSim) ResizeToFit() {
 	boxMin, boxMax := ls.Game.Population.BoundingBox()
 	newMin, newMax := fyne.NewPos(float32(boxMin.X), float32(boxMin.Y)), fyne.NewPos(float32(boxMax.X), float32(boxMax.Y))
 	ls.SetDisplayBox(newMin, newMax)
+	ls.Dirty = true
 }
