@@ -64,7 +64,7 @@ func BuildExampleMenuItems(loader func(examples.Example) func()) []*fyne.MenuIte
 	lastCategory := exList[0].Category // assumes at least one example
 	for _, ex := range exList {
 		if ex.Category != lastCategory {
-			newMenuItem := fyne.NewMenuItem(lastCategory, func() {})
+			newMenuItem := fyne.NewMenuItem(lastCategory, nil)
 			newMenuItem.ChildMenu = fyne.NewMenu(lastCategory, subItems...)
 			items = append(items, newMenuItem)
 			subItems = make([]*fyne.MenuItem, 0, 10)
