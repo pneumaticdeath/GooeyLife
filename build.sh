@@ -5,6 +5,16 @@ do
 	fyne-cross ${os} --arch=*
 done
 
+fyne-cross android
+
+# Hack to deal with a bug in the android cross 
+# compile container.
+if ! grep -q 'LinuxAndBSD' FyneApp.toml ; then
+	cat linux-block.toml >> FyneApp.toml
+fi
+
+fyne package --target web
+
 mkdir -p fyne-cross/packages || true
 
 for dir in fyne-cross/dist/darwin-*
