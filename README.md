@@ -11,21 +11,22 @@ for the latest builds.
 
 Here are some screenshots:
 
-Basic interface: 
+Basic interface:
 ![Main screen](images/GooeyLife.png)
 
-Editing Patterns
+Editing Patterns:
 ![Edit Mode](images/EditingMode.png)
 
-Running Patterns
+Running Patterns:
 ![Running](images/Running.png)
 
-Handles BIG patterns (this one is about 260K cells, I've loaded patterns of over 2.5M cells)
+Handles BIG patterns:
 ![Big Pattern](images/BigPattern.png)
+(this one is about 260K cells, I've loaded patterns of over 2.5M cells)
 
-Zoom in on complex patterns
+Zoom in on complex patterns:
 ![Zoomed In](images/BigPatternZoomedIn.png)
 
-Edit your settings
+Edit your settings:
 ![Settings pane](images/PreferencesPane.png)
 
