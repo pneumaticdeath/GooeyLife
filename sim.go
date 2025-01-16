@@ -224,7 +224,8 @@ func (ls *LifeSim) Draw() {
 
 	windowCenter := fyne.NewPos(windowSize.Width/2.0, windowSize.Height/2.0)
 
-	background := canvas.NewRectangle(Config.BackgroundColor())
+	bgColor := Config.BackgroundColor()
+	background := canvas.NewRectangle(bgColor)
 	background.Resize(windowSize)
 	background.Move(fyne.NewPos(0, 0))
 
@@ -272,23 +273,17 @@ func (ls *LifeSim) Draw() {
 	}
 
 	if ls.Scale < 2.0 && len(pixels) > 0 {
-		for pixelPos, count := range pixels {
-			var pixelColor color.Color
-			if ls.useAlphaDensity {
-				density := max(float32(count)/float32(maxDens), float32(0.25))
-				r, g, b, a := cellColor.RGBA()
-				pixelColor = color.NRGBA{R: uint8(r),
-					G: uint8(g),
-					B: uint8(b),
-					A: uint8(float32(a) * density)}
+		ro := canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
+			target_x := golife.Coord(float32(x) * windowSize.Width / float32(w))
+			target_y := golife.Coord(float32(y) * windowSize.Height / float32(h))
+			if pixels[golife.Cell{target_x, target_y}] > 0 {
+				return cellColor
 			} else {
-				pixelColor = cellColor
+				return bgColor
 			}
-			pixel := canvas.NewRectangle(pixelColor)
-			pixel.Resize(fyne.NewSize(2, 2))
-			pixel.Move(fyne.NewPos(float32(pixelPos.X), float32(pixelPos.Y)))
-			newObjects = append(newObjects, pixel)
-		}
+		})
+		ro.Resize(windowSize)
+		newObjects = append(newObjects, ro)
 	}
 
 	// By reducing the timespan between the removal and re-adding of the objects,
