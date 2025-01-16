@@ -144,14 +144,21 @@ func main() {
 
 	tabs.DocTabs.OnClosed = func(ti *container.TabItem) {
 		if len(tabs.DocTabs.Items) == 0 {
-			displayClock.Running = false
-			// allow the displayClock thread to gracefully exit before we call Quit()
-			time.Sleep(50 * time.Millisecond)
-			myApp.Quit()
+			if fyne.CurrentDevice().IsMobile() {
+				tabs.NewTab(NewLifeContainer(updateSimMenu))
+				updateSimMenu()
+				tabs.Refresh()
+			} else {
+				displayClock.Running = false
+				// allow the displayClock thread to gracefully exit before we call Quit()
+				time.Sleep(50 * time.Millisecond)
+				myApp.Quit()
+			}
 		} else {
 			obj := ti.Content
 			oldLC, ok := obj.(*LifeContainer)
 			if ok {
+				// Clean up LC update thread
 				oldLC.Control.Clock.Running = false
 			}
 			currentLC = tabs.CurrentLifeContainer()
@@ -208,13 +215,22 @@ func main() {
 	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
 		if len(tabs.DocTabs.Items) == 0 {
-			displayClock.Running = false
-			// allow the displayClock thread to gracefully exit before we call Quit()
-			time.Sleep(50 * time.Millisecond)
-			myApp.Quit()
+			if fyne.CurrentDevice().IsMobile() {
+				tabs.NewTab(NewLifeContainer(updateSimMenu))
+				updateSimMenu()
+				tabs.Refresh()
+			} else {
+				displayClock.Running = false
+				// allow the displayClock thread to gracefully exit before we call Quit()
+				time.Sleep(50 * time.Millisecond)
+				myApp.Quit()
+			}
 		} else {
-			tabs.Refresh()
+			// clean up LC update thread
+			currentLC.Control.Clock.Running = false
 			currentLC = tabs.CurrentLifeContainer()
+			updateSimMenu()
+			tabs.Refresh()
 		}
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
