@@ -187,8 +187,9 @@ func main() {
 			dialog.ShowError(err, mainWindow)
 		} else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
 			dialog.ShowError(errors.New(fmt.Sprintln("File doesn't have proper extension: ", writer.URI())), mainWindow)
-			writer.Close()
-		} else if writer != nil {
+			// writer.Close()  // hack for android save
+		}
+		if writer != nil {
 			write_err := currentLC.Sim.Game.WriteRLE(writer)
 			if write_err != nil {
 				dialog.ShowError(write_err, mainWindow)
@@ -294,7 +295,16 @@ func main() {
 
 	updateSimMenu() // set initial state
 
-	simMenu := fyne.NewMenu("Sim", simAutoZoomCheckMI, simZoomFitMI, simEditCheckMI)
+	simClearMI := fyne.NewMenuItem("Clear Pattern", func() {
+		dialog.ShowConfirm("Are you sure?", "Are you sure you want to clear the current pattern?",
+			func(yes bool) {
+				if yes {
+					tabs.SetCurrentGame(golife.NewGame())
+				}
+			}, mainWindow)
+	})
+
+	simMenu := fyne.NewMenu("Sim", simAutoZoomCheckMI, simZoomFitMI, simEditCheckMI, simClearMI)
 
 	mainMenu := fyne.NewMainMenu(fileMenu, simMenu, examplesMenu, helpMenu)
 
