@@ -186,7 +186,7 @@ func main() {
 		if err != nil {
 			dialog.ShowError(err, mainWindow)
 		} else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
-			dialog.ShowError(errors.New("File doesn't have proper extension"), mainWindow)
+			dialog.ShowError(errors.New(fmt.Sprintln("File doesn't have proper extension: ", writer.URI())), mainWindow)
 			writer.Close()
 		} else if writer != nil {
 			write_err := currentLC.Sim.Game.WriteRLE(writer)
