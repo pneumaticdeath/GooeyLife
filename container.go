@@ -59,5 +59,6 @@ func (lc *LifeContainer) SetGame(game *golife.Game) {
 	lc.Sim.Game = game
 	lc.Sim.Game.SetHistorySize(Config.HistorySize())
 	lc.Sim.ResizeToFit()
+	lc.Sim.EditMode.Set(len(game.Population) != 0)
 	lc.Sim.Dirty = true
 }

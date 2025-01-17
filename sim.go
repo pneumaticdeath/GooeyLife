@@ -66,7 +66,7 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.autoZoom.AddListener(binding.NewDataListener(menuUpdateCallback))
 	sim.EditMode = binding.NewBool()
 	sim.EditMode.AddListener(binding.NewDataListener(menuUpdateCallback))
-	sim.EditMode.Set(false)
+	sim.EditMode.Set(len(sim.Game.Population) != 0)
 	sim.ExtendBaseWidget(sim)
 	sim.Dirty = true
 	return sim
