@@ -53,8 +53,6 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim := &LifeSim{}
 	sim.Game = golife.NewGame()
 	sim.Game.SetHistorySize(Config.HistorySize())
-	// sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
-	// sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
 	sim.drawingSurface = container.NewWithoutLayout()
 	sim.ResizeToFit()
 	// sim.CellColor = Config.PausedCellColor()
