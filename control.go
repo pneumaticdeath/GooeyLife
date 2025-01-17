@@ -105,7 +105,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	controlBar.life.EditMode.AddListener(binding.NewDataListener(func() {
 		if controlBar.life.IsEditable() {
 			controlBar.StopSim()
-			if controlBar.life.Scale < 4.0 {
+			if controlBar.life.Scale > 0.0 && controlBar.life.Scale < 4.0 {
 				confirm := dialog.NewConfirm("Scale is very small",
 					"Each cell is very small on the screen.  Would you like to zoom in?",
 					func(answer bool) {
@@ -179,6 +179,10 @@ func (controlBar *ControlBar) RunGame() {
 	controlBar.life.State = simRunning
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
+		if len(controlBar.life.Game.Population) == 0 {
+			controlBar.StopSim()
+			break
+		}
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
 	if controlBar.life.IsEditable() {

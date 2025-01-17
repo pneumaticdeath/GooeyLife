@@ -185,14 +185,16 @@ func main() {
 				tabs.Refresh()
 			}
 			// Now we save where we opend this file so that we can default to it next time.
-			Config.SetLastUsedDirURI(reader.URI())
+			if reader.URI().Scheme() == "file" {
+				Config.SetLastUsedDirURI(reader.URI())
+			}
 		}
 	}
 
 	fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
 		if err != nil {
 			dialog.ShowError(err, mainWindow)
-		} else if writer != nil && !saveLifeExtensionsFilter.Matches(writer.URI()) {
+		} else if writer != nil && writer.URI().Scheme() == "file" && !saveLifeExtensionsFilter.Matches(writer.URI()) {
 			dialog.ShowError(errors.New(fmt.Sprintln("File doesn't have proper extension: ", writer.URI())), mainWindow)
 			// writer.Close()  // hack for android save
 		}
@@ -201,7 +203,9 @@ func main() {
 			if write_err != nil {
 				dialog.ShowError(write_err, mainWindow)
 			}
-			Config.SetLastUsedDirURI(writer.URI())
+			if writer.URI().Scheme() == "file" {
+				Config.SetLastUsedDirURI(writer.URI())
+			}
 			writer.Close()
 		}
 	}

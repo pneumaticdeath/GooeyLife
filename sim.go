@@ -53,9 +53,10 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim := &LifeSim{}
 	sim.Game = golife.NewGame()
 	sim.Game.SetHistorySize(Config.HistorySize())
-	sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
-	sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
+	// sim.BoxDisplayMin = fyne.NewPos(0.0, 0.0)
+	// sim.BoxDisplayMax = fyne.NewPos(10.0, 10.0)
 	sim.drawingSurface = container.NewWithoutLayout()
+	sim.ResizeToFit()
 	// sim.CellColor = Config.PausedCellColor()
 	sim.State = simPaused
 	sim.useAlphaDensity = false
@@ -66,7 +67,7 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.autoZoom.AddListener(binding.NewDataListener(menuUpdateCallback))
 	sim.EditMode = binding.NewBool()
 	sim.EditMode.AddListener(binding.NewDataListener(menuUpdateCallback))
-	sim.EditMode.Set(len(sim.Game.Population) != 0)
+	sim.EditMode.Set(len(sim.Game.Population) == 0)
 	sim.ExtendBaseWidget(sim)
 	sim.Dirty = true
 	return sim
