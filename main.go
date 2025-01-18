@@ -159,7 +159,7 @@ func main() {
 			oldLC, ok := obj.(*LifeContainer)
 			if ok {
 				// Clean up LC update thread
-				oldLC.Control.Clock.Running = false
+				oldLC.StopClocks()
 			}
 			currentLC = tabs.CurrentLifeContainer()
 			updateSimMenu()
@@ -231,7 +231,7 @@ func main() {
 			}
 		} else {
 			// clean up LC update thread
-			currentLC.Control.Clock.Running = false
+			currentLC.StopClocks()
 			currentLC = tabs.CurrentLifeContainer()
 			updateSimMenu()
 			tabs.Refresh()

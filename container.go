@@ -62,3 +62,9 @@ func (lc *LifeContainer) SetGame(game *golife.Game) {
 	lc.Sim.EditMode.Set(len(game.Population) == 0)
 	lc.Sim.Dirty = true
 }
+
+func (lc *LifeContainer) StopClocks() {
+	lc.Status.StopClocks()
+	lc.Control.StopClocks()
+	lc.Sim.StopClocks()
+}

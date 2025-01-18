@@ -235,3 +235,7 @@ func (controlBar *ControlBar) StepBackward() {
 	}
 	controlBar.life.Dirty = true
 }
+
+func (cb *ControlBar) StopClocks() {
+	cb.Clock.Running = false
+}

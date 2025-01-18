@@ -407,3 +407,7 @@ func (ls *LifeSim) ResizeToFit() {
 	ls.SetDisplayBox(newMin, newMax)
 	ls.Dirty = true
 }
+
+func (ls *LifeSim) StopClocks() {
+	// Nothing to do here
+}
