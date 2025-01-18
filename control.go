@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"math"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
@@ -40,7 +38,7 @@ type ControlBar struct {
 	zoomOutButton      *widget.Button
 	zoomInButton       *widget.Button
 	glyphSelector      *widget.Select
-	stateDisplay	   *canvas.Text
+	stateDisplay       *widget.Label
 	speedSlider        *widget.Slider
 	bar                *fyne.Container
 	running            bool
@@ -92,7 +90,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	})
 	controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
 
-	controlBar.stateDisplay = canvas.NewText(controlBar.life.StateLabel(), color.Black)
+	controlBar.stateDisplay = widget.NewLabel(controlBar.life.StateLabel())
 	controlBar.stateDisplay.Alignment = fyne.TextAlignCenter
 	controlBar.life.State.AddListener(binding.NewDataListener(func() {
 		controlBar.stateDisplay.Text = controlBar.life.StateLabel()
