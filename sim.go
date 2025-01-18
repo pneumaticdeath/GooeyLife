@@ -36,7 +36,7 @@ type LifeSim struct {
 	LastStepTime                 time.Duration   // Statistic of time taken to calculate the last generation
 	LastDrawTime                 time.Duration   // How long it to draw the last frame
 	drawingSurface               *fyne.Container // The actual drawing surface
-	State                        int             // State the game is in.
+	State                        binding.Int     // State the game is in.
 	useAlphaDensity              bool            // whether to use alpha to adjust color for aggregate pixels
 	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
 	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
@@ -55,8 +55,8 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.Game.SetHistorySize(Config.HistorySize())
 	sim.drawingSurface = container.NewWithoutLayout()
 	sim.ResizeToFit()
-	// sim.CellColor = Config.PausedCellColor()
-	sim.State = simPaused
+	sim.State = binding.NewInt()
+	sim.State.Set(simPaused)
 	sim.useAlphaDensity = false
 	sim.GlyphStyle = "RoundedRectangle"
 	sim.autoZoom = binding.NewBool()
@@ -91,6 +91,15 @@ func (ls *LifeSim) SetEditMode(em bool) {
 func (ls *LifeSim) IsEditable() bool {
 	em, _ := ls.EditMode.Get()
 	return em
+}
+
+func (ls *LifeSim) SetState(state int) {
+	ls.State.Set(state)
+}
+
+func (ls *LifeSim) GetState() int {
+	state, _ := ls.State.Get()
+	return state
 }
 
 func (ls *LifeSim) Resize(size fyne.Size) {
@@ -178,7 +187,7 @@ func (ls *LifeSim) GetGameInfo() (string, string) {
 }
 
 func (ls *LifeSim) ModeColor() color.Color {
-	switch ls.State {
+	switch ls.GetState() {
 	case simPaused:
 		return Config.PausedCellColor()
 	case simRunning:
@@ -187,6 +196,19 @@ func (ls *LifeSim) ModeColor() color.Color {
 		return Config.EditCellColor()
 	default:
 		return color.White
+	}
+}
+
+func (ls *LifeSim) StateLabel() string {
+	switch ls.GetState() {
+	case simPaused:
+		return "Paused"
+	case simRunning:
+		return "Running"
+	case simEditing:
+		return "Editing"
+	default:
+		return "Unknown"
 	}
 }
 
