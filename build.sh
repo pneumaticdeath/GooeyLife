@@ -28,14 +28,10 @@ done
 
 for dir in fyne-cross/dist/windows-*
 do
-	pushd ${dir}
-	cp GooeyLife.exe.zip ../../packages/GooeyLife_$(basename ${dir} | sed -e 's/-/_/').exe.zip
-	popd
+	cp ${dir}/GooeyLife.exe.zip fyne-cross/packages/GooeyLife_$(basename ${dir} | sed -e 's/-/_/').exe.zip
 done
 
 for dir in fyne-cross/dist/linux-*
 do
-	pushd ${dir}
-	cp GooeyLife.tar.xz ../../packages/GooeyLife_$(basename ${dir} | sed -e 's/-/_/').tar.xz
-	popd
+	cp ${dir}/GooeyLife.tar.xz fyne-cross/packages/GooeyLife_$(basename ${dir} | sed -e 's/-/_/').tar.xz
 done
