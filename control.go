@@ -38,6 +38,7 @@ type ControlBar struct {
 	zoomOutButton      *widget.Button
 	zoomInButton       *widget.Button
 	glyphSelector      *widget.Select
+	stateDisplay       *widget.Label
 	speedSlider        *widget.Slider
 	bar                *fyne.Container
 	running            bool
@@ -89,14 +90,32 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 	})
 	controlBar.glyphSelector.SetSelected(controlBar.life.GlyphStyle)
 
-	controlBar.speedSlider = widget.NewSlider(0.5, 3.0) // log_10 scale in milliseconds
-	controlBar.speedSlider.SetValue(2.0)                // default to 100ms clock tick time
+	controlBar.stateDisplay = widget.NewLabel(controlBar.life.StateLabel())
+	controlBar.stateDisplay.Alignment = fyne.TextAlignCenter
+	controlBar.life.State.AddListener(binding.NewDataListener(func() {
+		controlBar.stateDisplay.Text = controlBar.life.StateLabel()
+		controlBar.Refresh()
+	}))
+
+	var minSpeed, maxSpeed, defaultSpeed float64
+	if fyne.CurrentDevice().IsMobile() {
+		maxSpeed = 1.25
+		minSpeed = 3.0
+	} else {
+		maxSpeed = 0.5
+		minSpeed = 3.0
+	}
+	defaultSpeed = 2.0
+
+	controlBar.speedSlider = widget.NewSlider(maxSpeed, minSpeed) // log_10 scale in milliseconds
+	controlBar.speedSlider.SetValue(defaultSpeed)                 // default to 100ms clock tick time
 	controlBar.speedSlider.Step = 0.1
 
 	fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
 	controlBar.bar = container.New(layout.NewAdaptiveGridLayout(2),
 		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
-			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton, controlBar.glyphSelector),
+			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton,
+			controlBar.glyphSelector, layout.NewSpacer(), controlBar.stateDisplay, layout.NewSpacer()),
 		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
 
 	// This is a bit of a hack... we want to stop the sim and prompt to zoom in
@@ -119,11 +138,11 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 					mainWindow)
 				confirm.Show()
 			}
-			controlBar.life.State = simEditing
+			controlBar.life.SetState(simEditing)
 		} else if controlBar.IsRunning() {
-			controlBar.life.State = simRunning
+			controlBar.life.SetState(simRunning)
 		} else {
-			controlBar.life.State = simPaused
+			controlBar.life.SetState(simPaused)
 		}
 		controlBar.life.Dirty = true
 	}))
@@ -176,7 +195,7 @@ func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (controlBar *ControlBar) RunGame() {
-	controlBar.life.State = simRunning
+	controlBar.life.SetState(simRunning)
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
 		if len(controlBar.life.Game.Population) == 0 {
@@ -186,9 +205,9 @@ func (controlBar *ControlBar) RunGame() {
 		time.Sleep(time.Duration(math.Pow(10.0, controlBar.speedSlider.Value)) * time.Millisecond)
 	}
 	if controlBar.life.IsEditable() {
-		controlBar.life.State = simEditing
+		controlBar.life.SetState(simEditing)
 	} else {
-		controlBar.life.State = simPaused
+		controlBar.life.SetState(simPaused)
 	}
 	controlBar.life.Dirty = true
 }
@@ -215,4 +234,8 @@ func (controlBar *ControlBar) StepBackward() {
 		controlBar.backwardStepButton.Disable()
 	}
 	controlBar.life.Dirty = true
+}
+
+func (cb *ControlBar) StopClocks() {
+	cb.Clock.Running = false
 }

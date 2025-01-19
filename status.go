@@ -27,6 +27,7 @@ type StatusBar struct {
 	TargetGPSDisplay    *widget.Label
 	ActualGPSDisplay    *widget.Label
 	UpdateCadence       time.Duration
+	ClockRunning        bool
 	bar                 *fyne.Container
 }
 
@@ -42,7 +43,7 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 	statBar := &StatusBar{life: sim, control: cb, GenerationDisplay: genDisp, CellCountDisplay: cellCountDisp,
 		HistorySizeDisplay: histSizeDisp, ScaleDisplay: scaleDisp, LastStepTimeDisplay: lastStepTimeDisp,
 		LastDrawTimeDisplay: lastDrawTimeDisp, TargetGPSDisplay: targetGPSDisp,
-		ActualGPSDisplay: actualGPSDisp, UpdateCadence: 20.0 * time.Millisecond}
+		ActualGPSDisplay: actualGPSDisp, UpdateCadence: 50.0 * time.Millisecond, ClockRunning: true}
 
 	if fyne.CurrentDevice().IsMobile() {
 		statBar.bar = container.New(layout.NewVBoxLayout(),
@@ -65,7 +66,7 @@ func NewStatusBar(sim *LifeSim, cb *ControlBar) *StatusBar {
 	statBar.ExtendBaseWidget(statBar)
 
 	go func() {
-		for {
+		for statBar.ClockRunning {
 			statBar.Refresh()
 			time.Sleep(statBar.UpdateCadence)
 		}
@@ -93,4 +94,8 @@ func (statBar *StatusBar) Update() {
 func (statBar *StatusBar) Refresh() {
 	statBar.Update()
 	statBar.BaseWidget.Refresh()
+}
+
+func (statBar *StatusBar) StopClocks() {
+	statBar.ClockRunning = false
 }
