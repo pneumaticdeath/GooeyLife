@@ -217,6 +217,8 @@ func main() {
 	newTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyN, Modifier: modKey}
 
 	closeTabMenuItem := fyne.NewMenuItem("Close current tab", func() {
+		// clean up LC update thread
+		currentLC.StopClocks()
 		tabs.DocTabs.RemoveIndex(tabs.DocTabs.SelectedIndex())
 		if len(tabs.DocTabs.Items) == 0 {
 			if fyne.CurrentDevice().IsMobile() {
@@ -226,12 +228,10 @@ func main() {
 			} else {
 				displayClock.Running = false
 				// allow the displayClock thread to gracefully exit before we call Quit()
-				time.Sleep(50 * time.Millisecond)
+				time.Sleep(60 * time.Millisecond)
 				myApp.Quit()
 			}
 		} else {
-			// clean up LC update thread
-			currentLC.StopClocks()
 			currentLC = tabs.CurrentLifeContainer()
 			updateSimMenu()
 			tabs.Refresh()
