@@ -238,7 +238,7 @@ func (ls *LifeSim) Draw() {
 
 	ls.Scale = min(windowSize.Width/displayWidth, windowSize.Height/displayHeight)
 
-	cellSize := fyne.NewSize(ls.Scale * 0.9, ls.Scale * 0.9)
+	cellSize := fyne.NewSize(ls.Scale*0.9, ls.Scale*0.9)
 
 	displayCenter := fyne.NewPos((ls.BoxDisplayMax.X+ls.BoxDisplayMin.X)/2.0,
 		(ls.BoxDisplayMax.Y+ls.BoxDisplayMin.Y)/2.0)
@@ -262,7 +262,7 @@ func (ls *LifeSim) Draw() {
 	for cell := range population {
 		window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
 		window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
-		cellPos := fyne.NewPos(window_x + ls.Scale / 20 , window_y + ls.Scale / 20)
+		cellPos := fyne.NewPos(window_x+ls.Scale/20, window_y+ls.Scale/20)
 
 		if window_x >= -ls.Scale && window_y >= -ls.Scale && window_x < windowSize.Width+ls.Scale && window_y < windowSize.Height+ls.Scale {
 			if ls.Scale < 2.0 {
