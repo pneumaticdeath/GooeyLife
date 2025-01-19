@@ -393,6 +393,10 @@ func main() {
 		}
 	})
 
+	if Config.ShowGuidedTour() {
+		ShowGuidedTour()
+	}
+
 	// This is a workaround for a bug in Linux
 	// initial layout.
 	mainWindow.Resize(fyne.NewSize(1028, 770))
