@@ -198,7 +198,7 @@ func (controlBar *ControlBar) RunGame() {
 	controlBar.life.SetState(simRunning)
 	for controlBar.IsRunning() {
 		controlBar.StepForward()
-		if len(controlBar.life.Game.Population) == 0 {
+		if controlBar.life.Game.Size() == 0 {
 			controlBar.StopSim()
 			break
 		}

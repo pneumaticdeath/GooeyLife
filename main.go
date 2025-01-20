@@ -296,7 +296,7 @@ func main() {
 			games = append(games, examples.LoadExample(ex))
 		}
 		remaining := games
-		if len(currentLC.Sim.Game.Population) == 0 {
+		if currentLC.Sim.Game.Size() == 0 {
 			tabs.SetCurrentGame(games[0])
 			remaining = games[1:]
 		}
@@ -379,7 +379,7 @@ func main() {
 			}
 
 			remaining := games
-			if len(currentLC.Sim.Game.Population) == 0 {
+			if currentLC.Sim.Game.Size() == 0 {
 				currentLC.Control.StopSim()
 				tabs.SetCurrentGame(games[0])
 				remaining = games[1:]
