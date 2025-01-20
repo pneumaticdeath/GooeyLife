@@ -22,6 +22,7 @@ const (
 	runningCellColorKey   = "io.patenaude.gooeylife.running_color"
 	editCellColorKey      = "io.patenaude.gooeyLife.edit_color"
 	backgroundColorKey    = "io.patenaude.gooeyLife.background_color"
+	showGuidedTourKey     = "io.patenaude.gooeylife.guided_tour"
 	defaultHistorySize    = 10
 )
 
@@ -56,6 +57,14 @@ func (c ConfigT) AutoZoomDefault() bool {
 
 func (c ConfigT) SetAutoZoomDefault(value bool) {
 	c.app.Preferences().SetBool(autoZoomDefaultKey, value)
+}
+
+func (c ConfigT) ShowGuidedTour() bool {
+	return c.app.Preferences().BoolWithFallback(showGuidedTourKey, true)
+}
+
+func (c ConfigT) SetShowGuidedTour(show bool) {
+	c.app.Preferences().SetBool(showGuidedTourKey, show)
 }
 
 func (c ConfigT) DisplayRefreshRate() int {
