@@ -65,7 +65,7 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.autoZoom.AddListener(binding.NewDataListener(menuUpdateCallback))
 	sim.EditMode = binding.NewBool()
 	sim.EditMode.AddListener(binding.NewDataListener(menuUpdateCallback))
-	sim.EditMode.Set(len(sim.Game.Population) == 0)
+	sim.EditMode.Set(sim.Game.Size() == 0)
 	sim.ExtendBaseWidget(sim)
 	sim.Dirty = true
 	return sim
@@ -151,9 +151,21 @@ func (ls *LifeSim) Tapped(e *fyne.PointEvent) {
 }
 
 func (ls *LifeSim) Scrolled(se *fyne.ScrollEvent) {
-	// I'm going to treat this as equivalent to a Dragged event
-	de := &fyne.DragEvent{PointEvent: se.PointEvent, Dragged: se.Scrolled}
-	ls.Dragged(de)
+	if Config.ScrollAsZoom() {
+		// Slightly non-obvious... this will zoom in if DY is negative
+		// and zoom out if DY is positive.  -0.25 was chosen to taste
+		// dx := float64(se.Scrolled.DX)  // not sure what to so with this
+		dy := float64(se.Scrolled.DY)
+		if math.Abs(dy) > 0.01 {
+			ls.SetAutoZoom(false)
+		}
+		ls.Zoom(float32(math.Pow(zoomFactor, -0.25*dy)))
+		ls.Dirty = true
+	} else {
+		// We're going to treat this as equivalent to a Dragged event
+		de := &fyne.DragEvent{PointEvent: se.PointEvent, Dragged: se.Scrolled}
+		ls.Dragged(de)
+	}
 }
 
 func (ls *LifeSim) GetGameInfo() (string, string) {
