@@ -99,24 +99,36 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 
 	var minSpeed, maxSpeed, defaultSpeed float64
 	if fyne.CurrentDevice().IsMobile() {
-		maxSpeed = 1.25
-		minSpeed = 3.0
+		maxSpeed = 1.2     // ~67 GPS
+		minSpeed = 3.0     // 1.0 GPS
+		defaultSpeed = 2.5 // 3.3 GPS
 	} else {
-		maxSpeed = 0.5
-		minSpeed = 3.0
+		maxSpeed = 0.5     // 333 GPS
+		minSpeed = 3.0     // 1.0 GPS
+		defaultSpeed = 2.0 // 10.0 GPS
 	}
-	defaultSpeed = 2.0
 
 	controlBar.speedSlider = widget.NewSlider(maxSpeed, minSpeed) // log_10 scale in milliseconds
-	controlBar.speedSlider.SetValue(defaultSpeed)                 // default to 100ms clock tick time
+	controlBar.speedSlider.SetValue(defaultSpeed)
 	controlBar.speedSlider.Step = 0.1
 
-	fasterLabel := widget.NewLabelWithStyle("faster", fyne.TextAlignTrailing, fyne.TextStyle{})
+	fasterButton := widget.NewButton("faster", func() {
+		newVal := controlBar.speedSlider.Value - 0.1
+		controlBar.speedSlider.SetValue(max(maxSpeed, newVal))
+	})
+	fasterButton.Alignment = widget.ButtonAlignTrailing
+
+	slowerButton := widget.NewButton("slower", func() {
+		newVal := controlBar.speedSlider.Value + 0.1
+		controlBar.speedSlider.SetValue(min(minSpeed, newVal))
+	})
+	slowerButton.Alignment = widget.ButtonAlignLeading
+
 	controlBar.bar = container.New(layout.NewAdaptiveGridLayout(2),
 		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
 			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton,
 			controlBar.glyphSelector, layout.NewSpacer(), controlBar.stateDisplay, layout.NewSpacer()),
-		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterLabel, controlBar.speedSlider, widget.NewLabel("slower")))
+		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterButton, controlBar.speedSlider, slowerButton))
 
 	// This is a bit of a hack... we want to stop the sim and prompt to zoom in
 	// when the edit mode is turned on, and we can only stop the sim in the control
