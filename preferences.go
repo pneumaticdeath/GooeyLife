@@ -23,6 +23,7 @@ const (
 	editCellColorKey      = "io.patenaude.gooeyLife.edit_color"
 	backgroundColorKey    = "io.patenaude.gooeyLife.background_color"
 	showGuidedTourKey     = "io.patenaude.gooeylife.guided_tour"
+	scrollAsZoomKey       = "io.patenaude.gooeylife.scroll_as_zoom"
 	defaultHistorySize    = 10
 )
 
@@ -65,6 +66,14 @@ func (c ConfigT) ShowGuidedTour() bool {
 
 func (c ConfigT) SetShowGuidedTour(show bool) {
 	c.app.Preferences().SetBool(showGuidedTourKey, show)
+}
+
+func (c ConfigT) ScrollAsZoom() bool {
+	return c.app.Preferences().BoolWithFallback(scrollAsZoomKey, true)
+}
+
+func (c ConfigT) SetScrollAsZoom(saz bool) {
+	c.app.Preferences().SetBool(scrollAsZoomKey, saz)
 }
 
 func (c ConfigT) DisplayRefreshRate() int {
@@ -136,6 +145,12 @@ func (c ConfigT) ShowPreferencesDialog(tabs *LifeTabs, clk *DisplayUpdateClock) 
 	} else {
 		displayRefreshRateSelector.SetSelectedIndex(0)
 	}
+	scrollAsZoomRadioGroup := widget.NewRadioGroup([]string{"scroll", "zoom"}, nil)
+	if c.ScrollAsZoom() {
+		scrollAsZoomRadioGroup.SetSelected("zoom")
+	} else {
+		scrollAsZoomRadioGroup.SetSelected("scroll")
+	}
 	pausedColorPickerButton := widget.NewButtonWithIcon("Paused cells", theme.ColorPaletteIcon(), func() {
 		picker := dialog.NewColorPicker("Paused Cell Color", "", func(clr color.Color) {
 			c.SetPausedCellColor(clr)
@@ -176,6 +191,7 @@ func (c ConfigT) ShowPreferencesDialog(tabs *LifeTabs, clk *DisplayUpdateClock) 
 		widget.NewFormItem("Saved Generations", historySizeEntry),
 		widget.NewFormItem("Auto-zoom enabled by default", autoZoomDefaultCheck),
 		widget.NewFormItem("Diplay refresh rate", displayRefreshRateSelector),
+		widget.NewFormItem("Mouse wheel function", scrollAsZoomRadioGroup),
 		widget.NewFormItem("Paused Cell Color", pausedColorPickerButton),
 		widget.NewFormItem("Running Cell Color", runningColorPickerButton),
 		widget.NewFormItem("Editing Cell Color", editColorPickerButton),
@@ -203,6 +219,7 @@ func (c ConfigT) ShowPreferencesDialog(tabs *LifeTabs, clk *DisplayUpdateClock) 
 				c.SetDisplayRefreshRate(60)
 			}
 			clk.DisplayUpdateHz = c.DisplayRefreshRate()
+			c.SetScrollAsZoom(scrollAsZoomRadioGroup.Selected == "zoom")
 		}
 	}, mainWindow)
 }
