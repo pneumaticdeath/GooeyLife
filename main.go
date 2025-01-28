@@ -27,8 +27,8 @@ const (
 )
 
 type HelpPage struct {
-	Title  string
-	URLstr string
+	Title     string
+	URLstr    string
 	MobileURL string
 }
 
@@ -42,7 +42,7 @@ var HelpPages []HelpPage = []HelpPage{
 }
 
 func BuildHelpMenuItems(app fyne.App) []*fyne.MenuItem {
-	items := make([]*fyne.MenuItem, 0, len(HelpPages) + 2)
+	items := make([]*fyne.MenuItem, 0, len(HelpPages)+2)
 	for _, page := range HelpPages {
 		url, err := url.Parse(page.URLstr)
 		if fyne.CurrentDevice().IsMobile() && page.MobileURL != "" {
@@ -175,49 +175,6 @@ func main() {
 		}
 	}
 
-	lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt", ".life", ".life.txt", ".cells", ".cells.txt"}}
-	saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt"}}
-
-	fileOpenCallback := func(reader fyne.URIReadCloser, err error) {
-		if err != nil {
-			dialog.ShowError(err, mainWindow)
-		} else if reader != nil {
-			lifeReader := golife.FindReader(reader.URI().Name())
-			newGame, readErr := lifeReader(reader)
-			defer reader.Close()
-			if readErr != nil {
-				dialog.ShowError(readErr, mainWindow)
-			} else {
-				newGame.Filename = reader.URI().Path()
-				tabs.SetCurrentGame(newGame)
-				tabs.Refresh()
-			}
-			// Now we save where we opend this file so that we can default to it next time.
-			if reader.URI().Scheme() == "file" {
-				Config.SetLastUsedDirURI(reader.URI())
-			}
-		}
-	}
-
-	fileSaveCallback := func(writer fyne.URIWriteCloser, err error) {
-		if err != nil {
-			dialog.ShowError(err, mainWindow)
-		} else if writer != nil && writer.URI().Scheme() == "file" && !saveLifeExtensionsFilter.Matches(writer.URI()) {
-			dialog.ShowError(errors.New(fmt.Sprintln("File doesn't have proper extension: ", writer.URI())), mainWindow)
-			// writer.Close()  // hack for android save
-		}
-		if writer != nil {
-			write_err := currentLC.Sim.Game.WriteRLE(writer)
-			if write_err != nil {
-				dialog.ShowError(write_err, mainWindow)
-			}
-			if writer.URI().Scheme() == "file" {
-				Config.SetLastUsedDirURI(writer.URI())
-			}
-			writer.Close()
-		}
-	}
-
 	newTabMenuItem := fyne.NewMenuItem("New Tab", func() {
 		newlc := NewLifeContainer(updateSimMenu)
 		tabs.NewTab(newlc)
@@ -247,24 +204,6 @@ func main() {
 	})
 	closeTabMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyW, Modifier: modKey}
 
-	fileOpenMenuItem := fyne.NewMenuItem("Open", func() {
-		currentLC.Control.StopSim()
-		fileOpen := dialog.NewFileOpen(fileOpenCallback, mainWindow)
-		fileOpen.SetFilter(lifeFileExtensionsFilter)
-		fileOpen.SetLocation(Config.LastUsedDirURI())
-		fileOpen.Show()
-	})
-	fileOpenMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyO, Modifier: modKey}
-
-	fileSaveMenuItem := fyne.NewMenuItem("Save", func() {
-		currentLC.Control.StopSim()
-		fileSave := dialog.NewFileSave(fileSaveCallback, mainWindow)
-		fileSave.SetFilter(saveLifeExtensionsFilter)
-		fileSave.SetLocation(Config.LastUsedDirURI())
-		fileSave.Show()
-	})
-	fileSaveMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyS, Modifier: modKey}
-
 	fileInfoMenuItem := fyne.NewMenuItem("Get info", func() {
 		title, content := currentLC.Sim.GetGameInfo()
 		dialog.ShowInformation(title, content, mainWindow)
@@ -286,9 +225,116 @@ func main() {
 	})
 	fileSettingsMenuItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeySemicolon, Modifier: modKey}
 
-	fileMenu := fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
-		fileOpenMenuItem, fileSaveMenuItem, fyne.NewMenuItemSeparator(), fileInfoMenuItem, fileSettingsMenuItem,
-		fileAboutMenuItem)
+	updateMainMenu := func() {
+		// to be built later
+	}
+
+	fileLoadGameMenuItem := fyne.NewMenuItem("Load", nil)
+	savedGames := Config.SavedGames()
+	buildLoadSavedGamesMenu := func() {
+		if len(savedGames) > 0  {
+			mi := make([]*fyne.MenuItem, 0, len(savedGames))
+			for name, game := range savedGames {
+				mi = append(mi, fyne.NewMenuItem(name, func() {
+					tabs.SetCurrentGame(game.Copy())
+				}))
+			}
+			fileLoadGameMenuItem.ChildMenu = fyne.NewMenu("Load", mi...)
+			fileLoadGameMenuItem.Disabled = false
+			updateMainMenu()
+		} else {
+			fileLoadGameMenuItem.Disabled = true
+		}
+	}
+	buildLoadSavedGamesMenu()
+
+	fileSaveGameMenuItem := fyne.NewMenuItem("Save..", func() {
+		currentGame := currentLC.Sim.Game.Copy()
+		name := currentGame.Name
+		nameEntry := widget.NewEntry()
+		nameEntry.SetText(name)
+		formItems := []*widget.FormItem{ widget.NewFormItem("Name:", nameEntry) }
+
+		dialog.ShowForm("Save game as..", "Save", "Cancel", formItems, func(saved bool) {
+			if saved {
+				savedGames[nameEntry.Text] = currentGame
+				Config.SetSavedGames(savedGames)
+				buildLoadSavedGamesMenu()
+			}
+		}, mainWindow)
+	})
+
+	var fileMenu *fyne.Menu
+
+	if !fyne.CurrentDevice().IsMobile() {
+		lifeFileExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt", ".life", ".life.txt", ".cells", ".cells.txt"}}
+		saveLifeExtensionsFilter := &LongExtensionsFileFilter{Extensions: []string{".rle", ".rle.txt"}}
+
+		fileImportCallback := func(reader fyne.URIReadCloser, err error) {
+			if err != nil {
+				dialog.ShowError(err, mainWindow)
+			} else if reader != nil {
+				lifeReader := golife.FindReader(reader.URI().Name())
+				newGame, readErr := lifeReader(reader)
+				defer reader.Close()
+				if readErr != nil {
+					dialog.ShowError(readErr, mainWindow)
+				} else {
+					newGame.Filename = reader.URI().Path()
+					tabs.SetCurrentGame(newGame)
+					tabs.Refresh()
+				}
+				// Now we save where we opend this file so that we can default to it next time.
+				if reader.URI().Scheme() == "file" {
+					Config.SetLastUsedDirURI(reader.URI())
+				}
+			}
+		}
+
+		fileExportCallback := func(writer fyne.URIWriteCloser, err error) {
+			if err != nil {
+				dialog.ShowError(err, mainWindow)
+			} else if writer != nil && writer.URI().Scheme() == "file" && !saveLifeExtensionsFilter.Matches(writer.URI()) {
+				dialog.ShowError(errors.New(fmt.Sprintln("File doesn't have proper extension: ", writer.URI())), mainWindow)
+				// writer.Close()  // hack for android save
+			}
+			if writer != nil {
+				write_err := currentLC.Sim.Game.WriteRLE(writer)
+				if write_err != nil {
+					dialog.ShowError(write_err, mainWindow)
+				}
+				if writer.URI().Scheme() == "file" {
+					Config.SetLastUsedDirURI(writer.URI())
+				}
+				writer.Close()
+			}
+		}
+
+		fileImportMenuItem := fyne.NewMenuItem("Import...", func() {
+			currentLC.Control.StopSim()
+			fileOpen := dialog.NewFileOpen(fileImportCallback, mainWindow)
+			fileOpen.SetFilter(lifeFileExtensionsFilter)
+			fileOpen.SetLocation(Config.LastUsedDirURI())
+			fileOpen.Show()
+		})
+
+		fileExportMenuItem := fyne.NewMenuItem("Export...", func() {
+			currentLC.Control.StopSim()
+			fileSave := dialog.NewFileSave(fileExportCallback, mainWindow)
+			fileSave.SetFilter(saveLifeExtensionsFilter)
+			fileSave.SetLocation(Config.LastUsedDirURI())
+			fileSave.Show()
+		})
+
+		fileMenu = fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
+			fileLoadGameMenuItem, fileSaveGameMenuItem, fyne.NewMenuItemSeparator(),
+			fileImportMenuItem, fileExportMenuItem, fyne.NewMenuItemSeparator(),
+			fileInfoMenuItem, fileSettingsMenuItem, fileAboutMenuItem)
+	} else {
+		fileMenu = fyne.NewMenu("File", newTabMenuItem, closeTabMenuItem, fyne.NewMenuItemSeparator(),
+			fileLoadGameMenuItem, fileSaveGameMenuItem, fyne.NewMenuItemSeparator(),
+			fileInfoMenuItem, fileSettingsMenuItem, fileAboutMenuItem)
+	}
 
 	exampleLoader := func(e examples.Example) func() {
 		return func() {
@@ -335,6 +381,10 @@ func main() {
 	simMenu := fyne.NewMenu("Sim", simAutoZoomCheckMI, simZoomFitMI, simEditCheckMI, simClearMI)
 
 	mainMenu := fyne.NewMainMenu(fileMenu, simMenu, examplesMenu, helpMenu)
+
+	updateMainMenu = func() {
+		mainMenu.Refresh()
+	}
 
 	mainWindow.SetMainMenu(mainMenu)
 

@@ -25,7 +25,9 @@ func NewLifeTabs(lc *LifeContainer) *LifeTabs {
 	lt := &LifeTabs{}
 
 	title := "Blank Game"
-	if lc.Sim.Game.Filename != "" {
+	if lc.Sim.Game.Name != "" {
+		title = lc.Sim.Game.Name
+	} else if lc.Sim.Game.Filename != "" {
 		title = filepath.Base(lc.Sim.Game.Filename)
 	}
 	ti := container.NewTabItem(title, lc)
@@ -78,7 +80,9 @@ func (lt *LifeTabs) GetLifeContainters() []*LifeContainer {
 
 func (lt *LifeTabs) NewTab(lc *LifeContainer) {
 	title := "Blank Game"
-	if lc.Sim.Game.Filename != "" {
+	if lc.Sim.Game.Name != "" {
+		title = lc.Sim.Game.Name
+	} else if lc.Sim.Game.Filename != "" {
 		title = filepath.Base(lc.Sim.Game.Filename)
 	}
 	lt.DocTabs.Append(container.NewTabItem(title, lc))
@@ -89,7 +93,9 @@ func (lt *LifeTabs) SetCurrentGame(game *golife.Game) {
 	lc := lt.CurrentLifeContainer()
 	lc.SetGame(game)
 	title := "Blank Game"
-	if game.Filename != "" {
+	if game.Name != "" {
+		title = game.Name
+	} else if game.Filename != "" {
 		title = filepath.Base(game.Filename)
 	}
 	lt.DocTabs.Selected().Text = title

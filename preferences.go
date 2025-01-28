@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"image/color"
 	"strconv"
+	"strings"
+
+	"github.com/pneumaticdeath/golife"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/validation"
@@ -24,6 +27,7 @@ const (
 	backgroundColorKey    = "io.patenaude.gooeyLife.background_color"
 	showGuidedTourKey     = "io.patenaude.gooeylife.guided_tour"
 	scrollAsZoomKey       = "io.patenaude.gooeylife.scroll_as_zoom"
+	savedGamesKey         = "io.patenaude.gooeylife.saved_games"
 	defaultHistorySize    = 10
 )
 
@@ -82,6 +86,47 @@ func (c ConfigT) DisplayRefreshRate() int {
 
 func (c ConfigT) SetDisplayRefreshRate(rate int) {
 	c.app.Preferences().SetInt(displayRefreshRateKey, rate)
+}
+
+func (c ConfigT) SavedGames() map[string]*golife.Game {
+	gameStrs := c.app.Preferences().StringList(savedGamesKey)
+	games := make(map[string]*golife.Game)
+	blankCounter := 1
+	for _, rleData := range gameStrs {
+		reader := strings.NewReader(rleData)
+		game, err := golife.ReadRLE(reader)
+		if err != nil {
+			fyne.LogError("Unable to decode saved game", err)
+			continue
+		}
+		name := game.Name
+		for name == "" {
+			name = fmt.Sprintf("Blank game %d", blankCounter)
+			_, present := games[name]
+			if present {
+				name = ""
+			}
+			blankCounter += 1
+		}
+		games[name] = game
+	}
+
+	return games
+}
+
+func (c ConfigT) SetSavedGames(games map[string]*golife.Game) {
+	gameStrs := make([]string, 0, len(games))
+	for name, game := range games {
+		game.Name = name
+		var writer strings.Builder
+		err := game.WriteRLE(&writer)
+		if err != nil {
+			fyne.LogError(fmt.Sprintf("Unable to encode game %s", name), err)
+			continue
+		}
+		gameStrs = append(gameStrs, writer.String())
+	}
+	c.app.Preferences().SetStringList(savedGamesKey, gameStrs)
 }
 
 func (c ConfigT) PausedCellColor() color.Color {
