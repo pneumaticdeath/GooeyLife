@@ -16,7 +16,7 @@ func ShowGuidedTour() {
 
 	var text *widget.Label
 	if fyne.CurrentDevice().IsMobile() {
-		text = widget.NewLabel("The Hamburger menu in the upper left allows you to control the simulation.\nTry Help->Tour to get started.")
+		text = widget.NewLabel("The Hamburger menu in the upper\nleft allows you to control the simulation.\nTry Help->Tour to get started.")
 	} else {
 		text = widget.NewLabel("You might want to take the tour of the program under the Help menu.")
 	}
