@@ -32,3 +32,6 @@ go.work.sum
 
 # idea workspace
 .idea
+
+# release scripts
+release_mobile.sh
