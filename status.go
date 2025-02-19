@@ -92,8 +92,8 @@ func (statBar *StatusBar) Update() {
 }
 
 func (statBar *StatusBar) Refresh() {
-	statBar.Update()
-	statBar.BaseWidget.Refresh()
+	fyne.DoAndWait(statBar.Update)
+	fyne.Do(statBar.BaseWidget.Refresh)
 }
 
 func (statBar *StatusBar) StopClocks() {

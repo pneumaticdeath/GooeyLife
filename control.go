@@ -230,7 +230,7 @@ func (controlBar *ControlBar) StepForward() {
 	controlBar.lastUpdateTime = time.Now()
 	controlBar.Clock.LifeTick()
 	if len(controlBar.life.Game.History) > 0 {
-		controlBar.backwardStepButton.Enable() // We might have history now
+		fyne.Do(controlBar.backwardStepButton.Enable) // We might have history now
 	}
 }
 

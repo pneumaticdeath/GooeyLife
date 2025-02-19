@@ -326,7 +326,7 @@ func (ls *LifeSim) Draw() {
 		ls.drawingSurface.Add(obj)
 	}
 
-	ls.drawingSurface.Refresh()
+	fyne.Do(ls.drawingSurface.Refresh)
 	ls.LastDrawTime = time.Since(start)
 }
 

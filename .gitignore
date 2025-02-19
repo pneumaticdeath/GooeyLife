@@ -34,4 +34,4 @@ go.work.sum
 .idea
 
 # release scripts
-release_mobile.sh
+# release_mobile.sh
