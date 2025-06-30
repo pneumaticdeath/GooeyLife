@@ -3,7 +3,7 @@ module github.com/pneumaticdeath/GooeyLife
 go 1.23.4
 
 require (
-	fyne.io/fyne/v2 v2.6.0
+	fyne.io/fyne/v2 v2.6.1
 	fyne.io/x/fyne v0.0.0-20241224222935-5be10b3dd763
 	github.com/pneumaticdeath/golife v0.2.4
 )
