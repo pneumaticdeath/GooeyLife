@@ -199,7 +199,9 @@ func (controlBar *ControlBar) ZoomOut() {
 }
 
 func (controlBar *ControlBar) setRunStopIcon(icon fyne.Resource) {
-	controlBar.runStopButton.SetIcon(icon)
+	fyne.Do(func(){
+		controlBar.runStopButton.SetIcon(icon)
+	})
 }
 
 func (controlBar *ControlBar) CreateRenderer() fyne.WidgetRenderer {
