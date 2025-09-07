@@ -1,0 +1,21 @@
+#!/bin/bash
+
+source .env 
+
+case "$1" in 
+	android)
+		fyne package --target android
+		fyne install --os android
+		;;
+	ios)
+		fyne release --target ios --certificate "${IOSDEVCERT}" --profile "${IOSDEVPROF}"
+		fyne install --os ios
+		;;
+	iossimulator)
+		fyne release --target ios --certificate "${IOSDEVCERT}" --profile "${IOSDEVPROF}"
+		fyne install --os iossimulator
+		;;
+	*)
+		echo Only android, ios and iossimulator supported currently
+		;;
+esac	
