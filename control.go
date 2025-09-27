@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	xlayout "fyne.io/x/fyne/layout"
+	// xlayout "fyne.io/x/fyne/layout"
 )
 
 // The ControlBar structure controls all aspects
@@ -128,7 +128,8 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 		container.New(layout.NewHBoxLayout(), controlBar.backwardStepButton, controlBar.runStopButton,
 			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton,
 			controlBar.glyphSelector, layout.NewSpacer(), controlBar.stateDisplay, layout.NewSpacer()),
-		container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterButton, controlBar.speedSlider, slowerButton))
+		// container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterButton, controlBar.speedSlider, slowerButton))
+		container.NewBorder( nil, nil, fasterButton, slowerButton, controlBar.speedSlider))
 
 	// This is a bit of a hack... we want to stop the sim and prompt to zoom in
 	// when the edit mode is turned on, and we can only stop the sim in the control
