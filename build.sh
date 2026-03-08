@@ -2,7 +2,7 @@
  
 for os in darwin windows linux
 do
-	fyne-cross ${os} --arch=*
+	fyne-cross ${os} --pull --arch=*
 done
 
 fyne-cross android

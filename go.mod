@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	fyne.io/fyne/v2 v2.6.1
-	github.com/pneumaticdeath/golife v0.2.4
+	github.com/pneumaticdeath/golife v0.2.5
 )
 
 require (

@@ -61,6 +61,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pneumaticdeath/golife v0.2.4 h1:Uks1JDWtFeGXsUtCax6VItM0t3+Wq+TdXNKPkcGoHnQ=
 github.com/pneumaticdeath/golife v0.2.4/go.mod h1:oeASKHy8byVViHMrJGWMvFzpoezOAZJTZ1RSOMWOPCI=
+github.com/pneumaticdeath/golife v0.2.5 h1:lrBx9sBF64Vr9n2KIGR/ajyJ0EGHegX74CJgol5Sd4o=
+github.com/pneumaticdeath/golife v0.2.5/go.mod h1:oeASKHy8byVViHMrJGWMvFzpoezOAZJTZ1RSOMWOPCI=
 github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
 github.com/rogpeppe/go-internal v1.10.0 h1:TMyTOH3F/DB16zRVcYyreMH6GnZZrwQVAoYjRBZyWFQ=
 github.com/rogpeppe/go-internal v1.10.0/go.mod h1:UQnix2H7Ngw/k4C5ijL5+65zddjncjaFoBhdsK/akog=

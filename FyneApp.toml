@@ -1,14 +1,14 @@
 Website = "https://patenaude.io/"
 
 [Details]
-  Icon = "Icon.png"
-  Name = "GooeyLife"
-  ID = "io.patenaude.gooeylife"
-  Version = "1.0.6"
-  Build = 187
+Icon = "Icon.png"
+Name = "GooeyLife"
+ID = "io.patenaude.gooeylife"
+Version = "1.1.0"
+Build = 215
 
 [LinuxAndBSD]
-  GenericName = "Game of Life"
-  Categories = ["Game"]
-  Comment = "Run simulations of Conway's Game of Life"
-  Keywords = ["life", "game"]
+GenericName = "Game of Life"
+Categories = ["Game"]
+Comment = "Run simulations of Conway's Game of Life"
+Keywords = ["life", "game"]

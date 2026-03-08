@@ -23,6 +23,11 @@ const (
 	simEditing = iota
 )
 
+// glyphScaleThreshold is the minimum Scale at which individual cell glyphs
+// are used instead of the raster path. At high zoom, fewer cells are visible
+// so the per-object cost is acceptable; at low zoom the raster is used instead.
+const glyphScaleThreshold = float32(6.0)
+
 // LifeSim - encapsulates everything about the simulation and displaying it on
 // a canvas/container, including the amount of the population that is visible
 // (zoom level), but doesn't handle the animation, control or reporting
@@ -43,6 +48,16 @@ type LifeSim struct {
 	EditMode                     binding.Bool    // Whether the sim is in editable mode
 	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
 	Dirty                        bool            // Does the screen need to be redrawn
+	raster                       *canvas.Raster  // single persistent raster for zoomed-out rendering
+	screenCells                  []bool          // flat bool array indexed by py*screenCols+px
+	screenCols                   int             // logical width of screenCells grid
+	screenRows                   int             // logical height of screenCells grid
+	rasterCellColor              color.Color     // cell color read by raster pixel function
+	rasterBgColor                color.Color     // background color read by raster pixel function
+	usingRaster                  bool            // tracks which path was used last frame
+	background                   *canvas.Rectangle   // reusable background rectangle for glyph path
+	cellPool                     []fyne.CanvasObject // reusable pool of cell glyphs for glyph path
+	poolStyle                    string              // GlyphStyle the pool was built for
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
@@ -68,6 +83,25 @@ func NewLifeSim(menuUpdateCallback func()) *LifeSim {
 	sim.EditMode.Set(sim.Game.Size() == 0)
 	sim.ExtendBaseWidget(sim)
 	sim.Dirty = true
+	sim.screenCells = make([]bool, 1)
+	sim.rasterCellColor = color.White
+	sim.rasterBgColor = color.Black
+	sim.raster = canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
+		if sim.screenCols == 0 || sim.screenRows == 0 || w == 0 || h == 0 {
+			return sim.rasterBgColor
+		}
+		px := x * sim.screenCols / w
+		py := y * sim.screenRows / h
+		if px >= 0 && px < sim.screenCols && py >= 0 && py < sim.screenRows && sim.screenCells[py*sim.screenCols+px] {
+			return sim.rasterCellColor
+		}
+		return sim.rasterBgColor
+	})
+	sim.drawingSurface.Objects = []fyne.CanvasObject{sim.raster}
+	sim.usingRaster = true
+	sim.background = canvas.NewRectangle(color.Black)
+	sim.cellPool = make([]fyne.CanvasObject, 0, 256)
+	sim.poolStyle = ""
 	return sim
 }
 
@@ -250,80 +284,122 @@ func (ls *LifeSim) Draw() {
 
 	ls.Scale = min(windowSize.Width/displayWidth, windowSize.Height/displayHeight)
 
-	cellSize := fyne.NewSize(ls.Scale*0.9, ls.Scale*0.9)
-
 	displayCenter := fyne.NewPos((ls.BoxDisplayMax.X+ls.BoxDisplayMin.X)/2.0,
 		(ls.BoxDisplayMax.Y+ls.BoxDisplayMin.Y)/2.0)
 
 	windowCenter := fyne.NewPos(windowSize.Width/2.0, windowSize.Height/2.0)
 
-	bgColor := Config.BackgroundColor()
-	background := canvas.NewRectangle(bgColor)
-	background.Resize(windowSize)
-	background.Move(fyne.NewPos(0, 0))
+	if ls.Scale >= glyphScaleThreshold {
+		// Glyph path: individual canvas objects per cell.
+		// Used at high zoom where fewer cells are visible and visual quality matters.
+		cellSize := fyne.NewSize(ls.Scale*0.9, ls.Scale*0.9)
+		bgColor := Config.BackgroundColor()
+		cellColor := ls.ModeColor()
 
-	newObjects := make([]fyne.CanvasObject, 0, 1024)
-
-	newObjects = append(newObjects, background)
-
-	cellColor := ls.ModeColor()
-
-	pixels := make(map[golife.Cell]int32)
-	maxDens := 1
-
-	for cell := range population {
-		window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
-		window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
-		cellPos := fyne.NewPos(window_x+ls.Scale/20, window_y+ls.Scale/20)
-
-		if window_x >= -ls.Scale && window_y >= -ls.Scale && window_x < windowSize.Width+ls.Scale && window_y < windowSize.Height+ls.Scale {
-			if ls.Scale < 2.0 {
-				pixelPos := golife.Cell{golife.Coord(window_x), golife.Coord(window_y)}
-				pixels[pixelPos] += 1
-				if int(pixels[pixelPos]) > maxDens {
-					maxDens = int(pixels[pixelPos])
-				}
-			} else {
-				var cellGlyph fyne.CanvasObject
-				switch ls.GlyphStyle {
-				case "Rectangle":
-					cellGlyph = canvas.NewRectangle(cellColor)
-				case "RoundedRectangle":
-					tmpRect := canvas.NewRectangle(cellColor)
-					tmpRect.CornerRadius = ls.Scale / 5.0
-					cellGlyph = tmpRect
-				case "Circle":
-					cellGlyph = canvas.NewCircle(cellColor)
-				default:
-					cellGlyph = canvas.NewLine(cellColor)
-				}
-				cellGlyph.Resize(cellSize)
-				cellGlyph.Move(cellPos)
-
-				newObjects = append(newObjects, cellGlyph)
+		if ls.GlyphStyle != ls.poolStyle {
+			ls.cellPool = ls.cellPool[:0]
+			ls.poolStyle = ls.GlyphStyle
+		}
+		for len(ls.cellPool) < len(population) {
+			switch ls.GlyphStyle {
+			case "Rectangle", "RoundedRectangle":
+				ls.cellPool = append(ls.cellPool, canvas.NewRectangle(cellColor))
+			case "Circle":
+				ls.cellPool = append(ls.cellPool, canvas.NewCircle(cellColor))
+			default:
+				ls.cellPool = append(ls.cellPool, canvas.NewLine(cellColor))
 			}
 		}
-	}
 
-	if ls.Scale < 2.0 && len(pixels) > 0 {
-		ro := canvas.NewRasterWithPixels(func(x, y, w, h int) color.Color {
-			target_x := golife.Coord(float32(x) * windowSize.Width / float32(w))
-			target_y := golife.Coord(float32(y) * windowSize.Height / float32(h))
-			if pixels[golife.Cell{target_x, target_y}] > 0 {
-				return cellColor
-			} else {
-				return bgColor
+		// Pre-compute visible cell positions off the main thread.
+		type cellPos struct {
+			obj fyne.CanvasObject
+			pos fyne.Position
+		}
+		visible := make([]cellPos, 0, len(population))
+		poolIdx := 0
+		for cell := range population {
+			window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
+			window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
+			if window_x >= -ls.Scale && window_y >= -ls.Scale && window_x < windowSize.Width+ls.Scale && window_y < windowSize.Height+ls.Scale {
+				visible = append(visible, cellPos{ls.cellPool[poolIdx], fyne.NewPos(window_x+ls.Scale/20, window_y+ls.Scale/20)})
+				poolIdx++
+			}
+		}
+
+		// All canvas mutations must happen on the main goroutine.
+		fyne.Do(func() {
+			ls.background.FillColor = bgColor
+			ls.background.Resize(windowSize)
+			ls.background.Move(fyne.NewPos(0, 0))
+
+			newObjects := make([]fyne.CanvasObject, 0, len(visible)+1)
+			newObjects = append(newObjects, ls.background)
+
+			for _, cp := range visible {
+				switch ls.GlyphStyle {
+				case "Rectangle":
+					rect := cp.obj.(*canvas.Rectangle)
+					rect.FillColor = cellColor
+					rect.CornerRadius = 0
+				case "RoundedRectangle":
+					rect := cp.obj.(*canvas.Rectangle)
+					rect.FillColor = cellColor
+					rect.CornerRadius = ls.Scale / 5.0
+				case "Circle":
+					cp.obj.(*canvas.Circle).FillColor = cellColor
+				default:
+					cp.obj.(*canvas.Line).StrokeColor = cellColor
+				}
+				cp.obj.Resize(cellSize)
+				cp.obj.Move(cp.pos)
+				newObjects = append(newObjects, cp.obj)
+			}
+
+			ls.drawingSurface.RemoveAll()
+			for _, obj := range newObjects {
+				ls.drawingSurface.Add(obj)
 			}
 		})
-		ro.Resize(windowSize)
-		newObjects = append(newObjects, ro)
-	}
+		ls.usingRaster = false
+	} else {
+		// Raster path: single canvas object for all cells.
+		// Used at low zoom where many cells may be visible and efficiency matters.
+		ls.rasterBgColor = Config.BackgroundColor()
+		ls.rasterCellColor = ls.ModeColor()
 
-	// By reducing the timespan between the removal and re-adding of the objects,
-	// flicker is reduced or eliminated.
-	ls.drawingSurface.RemoveAll()
-	for _, obj := range newObjects {
-		ls.drawingSurface.Add(obj)
+		newCols := int(windowSize.Width) + 2
+		newRows := int(windowSize.Height) + 2
+		if newCols != ls.screenCols || newRows != ls.screenRows {
+			ls.screenCols = newCols
+			ls.screenRows = newRows
+			ls.screenCells = make([]bool, newCols*newRows)
+		} else {
+			clear(ls.screenCells)
+		}
+
+		for cell := range population {
+			window_x := windowCenter.X + ls.Scale*(float32(cell.X)-displayCenter.X) - ls.Scale/2.0
+			window_y := windowCenter.Y + ls.Scale*(float32(cell.Y)-displayCenter.Y) - ls.Scale/2.0
+
+			if window_x >= -ls.Scale && window_y >= -ls.Scale && window_x < windowSize.Width+ls.Scale && window_y < windowSize.Height+ls.Scale {
+				x0 := max(0, int(window_x+ls.Scale/20))
+				y0 := max(0, int(window_y+ls.Scale/20))
+				x1 := min(ls.screenCols-1, int(window_x+ls.Scale*0.9))
+				y1 := min(ls.screenRows-1, int(window_y+ls.Scale*0.9))
+				for py := y0; py <= y1; py++ {
+					for px := x0; px <= x1; px++ {
+						ls.screenCells[py*ls.screenCols+px] = true
+					}
+				}
+			}
+		}
+
+		if !ls.usingRaster {
+			ls.drawingSurface.Objects = []fyne.CanvasObject{ls.raster}
+			ls.usingRaster = true
+		}
+		ls.raster.Resize(windowSize)
 	}
 
 	fyne.Do(ls.drawingSurface.Refresh)
