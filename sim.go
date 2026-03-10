@@ -35,26 +35,26 @@ const glyphScaleThreshold = float32(6.0)
 type LifeSim struct {
 	widget.BaseWidget
 
-	Game                         *golife.Game    // The underlying GameOfLife engine
-	BoxDisplayMin, BoxDisplayMax fyne.Position   // The viewport into the game in the coordinates of the sim
-	Scale                        float32         // points per cell
-	LastStepTime                 time.Duration   // Statistic of time taken to calculate the last generation
-	LastDrawTime                 time.Duration   // How long it to draw the last frame
-	drawingSurface               *fyne.Container // The actual drawing surface
-	State                        binding.Int     // State the game is in.
-	useAlphaDensity              bool            // whether to use alpha to adjust color for aggregate pixels
-	GlyphStyle                   string          // One of "Rectange", "RoundedRectangle" or "Circle"
-	autoZoom                     binding.Bool    // Should the viewport automatically expand (but never contract) to fit the full population
-	EditMode                     binding.Bool    // Whether the sim is in editable mode
-	drawLock                     sync.Mutex      // Make sure only one goroutine is drawing at any given time
-	Dirty                        bool            // Does the screen need to be redrawn
-	raster                       *canvas.Raster  // single persistent raster for zoomed-out rendering
-	screenCells                  []bool          // flat bool array indexed by py*screenCols+px
-	screenCols                   int             // logical width of screenCells grid
-	screenRows                   int             // logical height of screenCells grid
-	rasterCellColor              color.Color     // cell color read by raster pixel function
-	rasterBgColor                color.Color     // background color read by raster pixel function
-	usingRaster                  bool            // tracks which path was used last frame
+	Game                         *golife.Game        // The underlying GameOfLife engine
+	BoxDisplayMin, BoxDisplayMax fyne.Position       // The viewport into the game in the coordinates of the sim
+	Scale                        float32             // points per cell
+	LastStepTime                 time.Duration       // Statistic of time taken to calculate the last generation
+	LastDrawTime                 time.Duration       // How long it to draw the last frame
+	drawingSurface               *fyne.Container     // The actual drawing surface
+	State                        binding.Int         // State the game is in.
+	useAlphaDensity              bool                // whether to use alpha to adjust color for aggregate pixels
+	GlyphStyle                   string              // One of "Rectange", "RoundedRectangle" or "Circle"
+	autoZoom                     binding.Bool        // Should the viewport automatically expand (but never contract) to fit the full population
+	EditMode                     binding.Bool        // Whether the sim is in editable mode
+	drawLock                     sync.Mutex          // Make sure only one goroutine is drawing at any given time
+	Dirty                        bool                // Does the screen need to be redrawn
+	raster                       *canvas.Raster      // single persistent raster for zoomed-out rendering
+	screenCells                  []bool              // flat bool array indexed by py*screenCols+px
+	screenCols                   int                 // logical width of screenCells grid
+	screenRows                   int                 // logical height of screenCells grid
+	rasterCellColor              color.Color         // cell color read by raster pixel function
+	rasterBgColor                color.Color         // background color read by raster pixel function
+	usingRaster                  bool                // tracks which path was used last frame
 	background                   *canvas.Rectangle   // reusable background rectangle for glyph path
 	cellPool                     []fyne.CanvasObject // reusable pool of cell glyphs for glyph path
 	poolStyle                    string              // GlyphStyle the pool was built for
@@ -399,7 +399,7 @@ func (ls *LifeSim) Draw() {
 			ls.drawingSurface.Objects = []fyne.CanvasObject{ls.raster}
 			ls.usingRaster = true
 		}
-		ls.raster.Resize(windowSize)
+		fyne.Do(func() { ls.raster.Resize(windowSize) })
 	}
 
 	fyne.Do(ls.drawingSurface.Refresh)

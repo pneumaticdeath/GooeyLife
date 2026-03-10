@@ -129,7 +129,7 @@ func NewControlBar(sim *LifeSim) *ControlBar {
 			controlBar.forwardStepButton, controlBar.zoomOutButton, controlBar.zoomInButton,
 			controlBar.glyphSelector, layout.NewSpacer(), controlBar.stateDisplay, layout.NewSpacer()),
 		// container.New(xlayout.NewHPortion([]float64{0.2, 0.6, 0.2}), fasterButton, controlBar.speedSlider, slowerButton))
-		container.NewBorder( nil, nil, fasterButton, slowerButton, controlBar.speedSlider))
+		container.NewBorder(nil, nil, fasterButton, slowerButton, controlBar.speedSlider))
 
 	// This is a bit of a hack... we want to stop the sim and prompt to zoom in
 	// when the edit mode is turned on, and we can only stop the sim in the control
@@ -200,7 +200,7 @@ func (controlBar *ControlBar) ZoomOut() {
 }
 
 func (controlBar *ControlBar) setRunStopIcon(icon fyne.Resource) {
-	fyne.Do(func(){
+	fyne.Do(func() {
 		controlBar.runStopButton.SetIcon(icon)
 	})
 }

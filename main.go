@@ -232,7 +232,7 @@ func main() {
 	fileLoadGameMenuItem := fyne.NewMenuItem("Load", nil)
 	savedGames := Config.SavedGames()
 	buildLoadSavedGamesMenu := func() {
-		if len(savedGames) > 0  {
+		if len(savedGames) > 0 {
 			mi := make([]*fyne.MenuItem, 0, len(savedGames))
 			for name, game := range savedGames {
 				mi = append(mi, fyne.NewMenuItem(name, func() {
@@ -253,7 +253,7 @@ func main() {
 		name := currentGame.Name
 		nameEntry := widget.NewEntry()
 		nameEntry.SetText(name)
-		formItems := []*widget.FormItem{ widget.NewFormItem("Name:", nameEntry) }
+		formItems := []*widget.FormItem{widget.NewFormItem("Name:", nameEntry)}
 
 		dialog.ShowForm("Save game as..", "Save", "Cancel", formItems, func(saved bool) {
 			if saved {
