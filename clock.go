@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 )
 
@@ -61,7 +62,14 @@ func (clk *DisplayUpdateClock) doDisplayRedraws() {
 	for clk.Running {
 		lc := clk.tabs.CurrentLifeContainer()
 		if lc != nil {
-			lc.Sim.Draw() // the Draw routine checks/clears the Dirty flag
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("Display update recovered from panic: %v", r)
+					}
+				}()
+				lc.Sim.Draw() // the Draw routine checks/clears the Dirty flag
+			}()
 		}
 		// This is last because the check for Running needs to happen immediately
 		// after the sleep ends.

@@ -5,7 +5,7 @@ Icon = "Icon.png"
 Name = "GooeyLife"
 ID = "io.patenaude.gooeylife"
 Version = "1.1.0"
-Build = 215
+Build = 252
 
 [LinuxAndBSD]
 GenericName = "Game of Life"

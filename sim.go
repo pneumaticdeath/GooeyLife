@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/pneumaticdeath/golife"
@@ -58,6 +59,7 @@ type LifeSim struct {
 	background                   *canvas.Rectangle   // reusable background rectangle for glyph path
 	cellPool                     []fyne.CanvasObject // reusable pool of cell glyphs for glyph path
 	poolStyle                    string              // GlyphStyle the pool was built for
+	drawPending                  atomic.Bool         // true while a fyne.Do callback from Draw() is still queued/running
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
@@ -270,6 +272,12 @@ func (ls *LifeSim) Draw() {
 	if !ls.Dirty {
 		return
 	}
+
+	// Skip this frame if the previous frame's fyne.Do hasn't been processed yet.
+	// Dirty stays true so we'll retry on the next display clock tick.
+	if ls.drawPending.Load() {
+		return
+	}
 	ls.Dirty = false
 
 	start := time.Now()
@@ -396,13 +404,19 @@ func (ls *LifeSim) Draw() {
 		}
 
 		if !ls.usingRaster {
-			ls.drawingSurface.Objects = []fyne.CanvasObject{ls.raster}
+			fyne.Do(func() {
+				ls.drawingSurface.Objects = []fyne.CanvasObject{ls.raster}
+			})
 			ls.usingRaster = true
 		}
 		fyne.Do(func() { ls.raster.Resize(windowSize) })
 	}
 
-	fyne.Do(ls.drawingSurface.Refresh)
+	ls.drawPending.Store(true)
+	fyne.Do(func() {
+		ls.drawingSurface.Refresh()
+		ls.drawPending.Store(false)
+	})
 	ls.LastDrawTime = time.Since(start)
 }
 
