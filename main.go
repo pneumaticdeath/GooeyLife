@@ -212,7 +212,7 @@ func main() {
 
 	fileAboutMenuItem := fyne.NewMenuItem("About", func() {
 		aboutContent := container.New(layout.NewVBoxLayout(), GooeyLifeIconImage,
-			widget.NewLabel(myApp.Metadata().Name), widget.NewLabel("Copyright 2024,2025"),
+			widget.NewLabel(myApp.Metadata().Name), widget.NewLabel("Copyright 2024,2025,2026"),
 			widget.NewLabel(fmt.Sprintf("Version %s (build %d)", myApp.Metadata().Version, myApp.Metadata().Build)),
 			widget.NewLabel("by Mitch Patenaude"),
 			widget.NewLabel("Examples copyright of their respective discoverers"))
