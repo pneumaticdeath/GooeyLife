@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -60,6 +61,10 @@ type LifeSim struct {
 	cellPool                     []fyne.CanvasObject // reusable pool of cell glyphs for glyph path
 	poolStyle                    string              // GlyphStyle the pool was built for
 	drawPending                  atomic.Bool         // true while a fyne.Do callback from Draw() is still queued/running
+	pinchFingers                 int                 // number of active touch points
+	pinchPos                     [2]fyne.Position    // last known position of each finger
+	pinchDist                    float32             // last distance between two fingers
+	pinchActive                  bool                // true when pinch gesture is in progress
 }
 
 func (ls *LifeSim) CreateRenderer() fyne.WidgetRenderer {
@@ -143,14 +148,73 @@ func (ls *LifeSim) Resize(size fyne.Size) {
 	ls.BaseWidget.Resize(size)
 }
 
+func (ls *LifeSim) TouchDown(e *mobile.TouchEvent) {
+	if ls.pinchFingers < 2 {
+		ls.pinchPos[ls.pinchFingers] = e.Position
+	}
+	ls.pinchFingers++
+	if ls.pinchFingers >= 2 {
+		ls.pinchDist = pointDist(ls.pinchPos[0], ls.pinchPos[1])
+		ls.pinchActive = true
+	}
+}
+
+func (ls *LifeSim) TouchUp(e *mobile.TouchEvent) {
+	ls.pinchFingers--
+	if ls.pinchFingers < 0 {
+		ls.pinchFingers = 0
+	}
+	if ls.pinchFingers < 2 {
+		ls.pinchActive = false
+	}
+}
+
+func (ls *LifeSim) TouchCancel(e *mobile.TouchEvent) {
+	ls.pinchFingers = 0
+	ls.pinchActive = false
+}
+
 func (ls *LifeSim) Dragged(e *fyne.DragEvent) {
 	if e.Dragged.IsZero() {
 		return
 	}
+
+	if ls.pinchActive {
+		// Assign this drag event to the nearest tracked finger
+		pos := e.Position
+		d0 := pointDist(pos, ls.pinchPos[0])
+		d1 := pointDist(pos, ls.pinchPos[1])
+		if d0 <= d1 {
+			ls.pinchPos[0] = pos
+		} else {
+			ls.pinchPos[1] = pos
+		}
+
+		newDist := pointDist(ls.pinchPos[0], ls.pinchPos[1])
+		if ls.pinchDist > 20 && newDist > 20 {
+			factor := ls.pinchDist / newDist
+			// Clamp to prevent dramatic zoom from spurious touch events
+			factor = max(0.8, min(1.2, factor))
+			ls.SetAutoZoom(false)
+			ls.Zoom(factor)
+			ls.Dirty = true
+		}
+		ls.pinchDist = newDist
+		return
+	}
+
+	// Normal single-finger pan
 	ls.SetAutoZoom(false)
 	dx, dy := e.Dragged.Components()
 	cells_x := dx / ls.Scale
 	cells_y := dy / ls.Scale
+
+	// Cap pan per event to 25% of the viewport to prevent jumps from
+	// accumulated deltas after a pinch gesture ends.
+	maxPanX := (ls.BoxDisplayMax.X - ls.BoxDisplayMin.X) * 0.25
+	maxPanY := (ls.BoxDisplayMax.Y - ls.BoxDisplayMin.Y) * 0.25
+	cells_x = max(-maxPanX, min(maxPanX, cells_x))
+	cells_y = max(-maxPanY, min(maxPanY, cells_y))
 
 	ls.BoxDisplayMin.X, ls.BoxDisplayMax.X = ls.BoxDisplayMin.X-cells_x, ls.BoxDisplayMax.X-cells_x
 	ls.BoxDisplayMin.Y, ls.BoxDisplayMax.Y = ls.BoxDisplayMin.Y-cells_y, ls.BoxDisplayMax.Y-cells_y
@@ -158,7 +222,17 @@ func (ls *LifeSim) Dragged(e *fyne.DragEvent) {
 }
 
 func (ls *LifeSim) DragEnd() {
-	// Not much to do here
+	// Reset pinch state. Fyne's mobile driver skips TouchUp when a drag is
+	// active (tapUp returns early), so DragEnd is the only reliable signal
+	// that the gesture has ended.
+	ls.pinchFingers = 0
+	ls.pinchActive = false
+}
+
+func pointDist(a, b fyne.Position) float32 {
+	dx := a.X - b.X
+	dy := a.Y - b.Y
+	return float32(math.Sqrt(float64(dx*dx + dy*dy)))
 }
 
 func (ls *LifeSim) Tapped(e *fyne.PointEvent) {

@@ -4,8 +4,8 @@ Website = "https://patenaude.io/"
 Icon = "Icon.png"
 Name = "GooeyLife"
 ID = "io.patenaude.gooeylife"
-Version = "1.1.0"
-Build = 254
+Version = "1.1.1"
+Build = 261
 
 [LinuxAndBSD]
 GenericName = "Game of Life"
